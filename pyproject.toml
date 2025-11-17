@@ -55,7 +55,7 @@ docs = [
 ]
 
 [project.scripts]
-vision = "vision.cli.main:app"
+vision = "src.cli.main:cli_main"
 
 [project.urls]
 Homepage = "https://github.com/YOUR_USERNAME/vision"
@@ -64,8 +64,8 @@ Repository = "https://github.com/YOUR_USERNAME/vision"
 Issues = "https://github.com/YOUR_USERNAME/vision/issues"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["vision*"]
+where = ["."]
+include = ["src*"]
 
 [tool.setuptools.package-data]
 vision = ["py.typed"]
