@@ -175,14 +175,15 @@ Vision automatically uses parallel execution for animation generation to dramati
 
 ### About Adaptive Compression
 
-Vision includes intelligent compression enhancements that work automatically:
+Vision includes intelligent compression enhancements (Phases 1-3) that work automatically:
 
 - **Phase 1: Palette Indexing** - 60-75% compression for sprites with ≤16 colors
 - **Phase 2: Delta Encoding** - 70-90% compression for animation frames
 - **Phase 3: Adaptive Thresholds** - Intelligent encoding selection (>90% optimal)
-- **Automatic Operation**: System analyzes sprites and selects best compression
-- **Full Monitoring**: Metadata tracked for all encoding decisions
-- **No Configuration**: Works transparently with zero user intervention
+- **Result:** 80-95% compression for ideal cases, working automatically
+- **Phase 4 (2D RLE):** Intentionally deferred as optional future enhancement
+
+**No configuration needed** - the system analyzes sprites and selects optimal compression transparently.
 
 See [`docs/ADAPTIVE_THRESHOLDS_GUIDE.md`](docs/ADAPTIVE_THRESHOLDS_GUIDE.md) for details.
 
