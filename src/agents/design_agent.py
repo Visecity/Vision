@@ -48,7 +48,7 @@ class DesignAgent(BaseAgent[AgentContext, dict[str, Any]]):
         model_name: Claude model to use for design generation
 
     Example:
-        >>> agent = DesignAgent(llm_client=client, model_name="claude-3-5-sonnet-20241022")
+        >>> agent = DesignAgent(llm_client=client, model_name="claude-sonnet-4-5-20250929")
         >>> context = AgentContext(
         ...     request=sprite_request,
         ...     current_step="design",
@@ -61,7 +61,7 @@ class DesignAgent(BaseAgent[AgentContext, dict[str, Any]]):
     def __init__(
         self,
         llm_client: LLMClient,
-        model_name: str = "claude-3-5-sonnet-20241022",
+        model_name: str = "claude-sonnet-4-5",
     ) -> None:
         """
         Initialize the Design Agent.

@@ -1,0 +1,132 @@
+---
+# Phase 8.2 - Player Character Assets (Frame-by-Frame Approach)
+# Breaking down complex animations into individual frames for better generation
+
+batch_name: phase_8_2_player_frames
+description: "Player character sprite frames - individual 32x32 frames"
+output_dir: Aris/phase-8-2/character
+create_atlas: true
+atlas_name: player_frames_atlas
+
+assets:
+  # DOWN DIRECTION (Row 0 - Facing camera)
+  - id: player_down_frame0
+    name: "16x32 player facing down - frame 0"
+    description: >
+      Player character 16x32 pixels facing camera (down/front direction).
+      Standing/walking frame 0 of 2-frame walk cycle.
+      Character design: beige/tan skin (#F5DEB3), brown hair (#654321), blue shirt (#4169E1),
+      brown pants (#8B4513), dark brown shoes (#3D2817).
+      Feet clearly at bottom of 16×32 frame. Sprite extends upward from ground.
+      Stardew Valley orthographic style. Clean pixel art, no anti-aliasing.
+    dimensions:
+      width: 16
+      height: 32
+    style: stardew_valley
+    tags: ["character", "player", "down", "frame0"]
+    
+  - id: player_down_frame1
+    name: "16x32 player facing down - frame 1"
+    description: >
+      Player character 16x32 pixels facing camera (down/front direction).
+      Walking frame 1 of 2-frame walk cycle (alternate foot position from frame 0).
+      Same character design: beige/tan skin, brown hair, blue shirt, brown pants, dark brown shoes.
+      Feet at bottom, sprite extends upward. Stardew Valley style.
+    dimensions:
+      width: 16
+      height: 32
+    style: stardew_valley
+    tags: ["character", "player", "down", "frame1"]
+  
+  # UP DIRECTION (Row 1 - Facing away)
+  - id: player_up_frame0
+    name: "16x32 player facing up - frame 0"
+    description: >
+      Player character 16x32 pixels facing away (up/back direction).
+      Back of head visible, standing/walking frame 0 of 2-frame cycle.
+      IMPORTANT: Same colors as front view - brown hair visible from back, blue shirt, brown pants.
+      Feet at bottom, sprite extends upward. Stardew Valley style.
+    dimensions:
+      width: 16
+      height: 32
+    style: stardew_valley
+    tags: ["character", "player", "up", "frame0"]
+    
+  - id: player_up_frame1
+    name: "16x32 player facing up - frame 1"
+    description: >
+      Player character 16x32 pixels facing away (up/back direction).
+      Walking frame 1 of 2-frame cycle (alternate foot from frame 0).
+      Same back view: brown hair, blue shirt, brown pants visible from behind.
+      Feet at bottom. Stardew Valley style.
+    dimensions:
+      width: 16
+      height: 32
+    style: stardew_valley
+    tags: ["character", "player", "up", "frame1"]
+  
+  # LEFT DIRECTION (Row 2 - Profile left)
+  - id: player_left_frame0
+    name: "16x32 player facing left - frame 0"
+    description: >
+      Player character 16x32 pixels profile view facing left.
+      Standing/walking frame 0 of 2-frame walk cycle.
+      Profile shows brown hair, skin tone, blue shirt, brown pants, dark shoes.
+      Feet at bottom, sprite extends upward. Stardew Valley style.
+    dimensions:
+      width: 16
+      height: 32
+    style: stardew_valley
+    tags: ["character", "player", "left", "frame0"]
+    
+  - id: player_left_frame1
+    name: "16x32 player facing left - frame 1"
+    description: >
+      Player character 16x32 pixels profile view facing left.
+      Walking frame 1 of 2-frame cycle (alternate foot position).
+      Same profile design. Feet at bottom. Stardew Valley style.
+    dimensions:
+      width: 16
+      height: 32
+    style: stardew_valley
+    tags: ["character", "player", "left", "frame1"]
+  
+  # RIGHT DIRECTION (Row 3 - Profile right)
+  - id: player_right_frame0
+    name: "16x32 player facing right - frame 0"
+    description: >
+      Player character 16x32 pixels profile view facing right.
+      Standing/walking frame 0 of 2-frame walk cycle.
+      Profile shows brown hair, skin tone, blue shirt, brown pants, dark shoes.
+      Feet at bottom, sprite extends upward. Stardew Valley style.
+      Can mirror left direction frames.
+    dimensions:
+      width: 16
+      height: 32
+    style: stardew_valley
+    tags: ["character", "player", "right", "frame0"]
+    
+  - id: player_right_frame1
+    name: "16x32 player facing right - frame 1"
+    description: >
+      Player character 16x32 pixels profile view facing right.
+      Walking frame 1 of 2-frame cycle (alternate foot position).
+      Same profile design. Feet at bottom. Stardew Valley style.
+    dimensions:
+      width: 16
+      height: 32
+    style: stardew_valley
+    tags: ["character", "player", "right", "frame1"]
+    
+  # Shadow (same as before)
+  - id: shadow
+    name: "16x8 pixel oval shadow sprite"
+    description: >
+      Create a simple 16x8 pixel oval shadow for character sprites.
+      Soft black to transparent gradient from center to edges.
+      Should look natural under a character at ground level.
+    dimensions:
+      width: 16
+      height: 8
+    style: stardew_valley
+    tags: ["effect", "shadow", "utility"]

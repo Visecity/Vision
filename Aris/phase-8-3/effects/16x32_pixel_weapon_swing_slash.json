@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "name": "16x32_pixel_weapon_swing_slash",
+    "description": "16x32 pixel weapon swing slash effect animation in Stardew Valley style. Four-frame animation sequence showing white/light blue semi-transparent arc sweep. Arc motion for sword/axe swing. Frame 1: beginning of arc, Frame 2: mid-swing, Frame 3: full extension, Frame 4: fade out. Total dimensions: 64x32 (4 frames of 16x32 each arranged horizontally). Translucent effect suitable for overlay on character attacks.",
+    "canvas": {
+      "width": 64,
+      "height": 32
+    }
+  },
+  "layers": [
+    {
+      "name": "Main Layer",
+      "elements": [
+        {
+          "type": "rect",
+          "x": 3,
+          "y": 3,
+          "width": 58,
+          "height": 26,
+          "fill": "#ffffff"
+        }
+      ]
+    }
+  ],
+  "palette": {
+    "color1": "#ffffff",
+    "color2": "#e0f4ff",
+    "color3": "#8fc9f0",
+    "color4": "#6ba3d4",
+    "color5": "#4a7ba7"
+  }
+}

@@ -136,6 +136,7 @@ Vision has access to multiple MCP servers. **ALWAYS evaluate if an MCP server ca
 - Use [`fetch-actor-details`](mcp://github/fetch-actor-details) to understand repository structure
 - Always create feature branches for significant changes
 - Use descriptive commit messages following conventional commits format
+- **Note:** While GitHub MCP tools are available for complex repository operations (branches, PRs, issues), use direct `git` commands for routine commits and pushes (see [GitHub Version Control](#-github-version-control) section)
 
 **Example usage:**
 ```python
@@ -370,6 +371,285 @@ def log_action(action_type: str, mode: str, action: str,
     with open("agent-log.md", "a") as f:
         f.write(log_entry)
 ```
+---
+
+## 🔄 GitHub Version Control
+
+### Commit Strategy
+
+**ALL significant work MUST be committed regularly** to maintain a clear history of changes. Use git commands directly for routine version control operations.
+
+### When to Commit
+
+Commit changes at these key points:
+
+1. **After completing a significant task**
+   - Implemented a new agent
+   - Fixed a bug
+   - Added a new feature
+   - Completed a test suite
+
+2. **After tests pass**
+   - All unit tests passing
+   - Integration tests successful
+   - Type checking passes (`mypy src`)
+   - Linting passes (`ruff src`)
+
+3. **Before switching modes**
+   - Save progress before mode transition
+   - Ensure work is not lost
+   - Create a checkpoint for reverting if needed
+
+4. **After documentation updates**
+   - Updated README or guides
+   - Added new documentation files
+   - Modified agent-instruction.md
+
+5. **At logical breakpoints**
+   - End of work session
+   - Before starting a new subtask
+   - After resolving merge conflicts
+
+### Commit Message Format
+
+Follow the **Conventional Commits** format for consistency:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, no logic change)
+- `refactor`: Code refactoring
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks (dependencies, config)
+- `perf`: Performance improvements
+
+**Examples:**
+```bash
+# Simple commit
+git commit -m "feat(detail-agent): implement Manifest JSON generation"
+
+# Detailed commit
+git commit -m "fix(animation-agent): resolve frame interpolation bug
+
+- Fixed incorrect delta calculation between frames
+- Added validation for frame sequence continuity
+- Updated tests to cover edge cases
+
+Fixes #42"
+
+# Documentation update
+git commit -m "docs(readme): add installation instructions for Redis"
+
+# Test addition
+git commit -m "test(palette-agent): add color harmony validation tests"
+```
+
+### When to Push to Remote
+
+Push changes to the remote repository at these points:
+
+1. **End of work session**
+   - Ensure work is backed up
+   - Make progress visible to team
+
+2. **After completing a major milestone**
+   - Finished implementing an agent
+   - Completed a phase deliverable
+   - All tests passing
+
+3. **Before switching to a different task**
+   - Save checkpoint for context switching
+   - Enable collaboration on current work
+
+4. **When seeking code review**
+   - Before creating pull requests
+   - When sharing work with team members
+
+5. **Daily (minimum)**
+   - At least once per day when actively working
+   - Even if work is incomplete (use feature branches)
+
+**Push commands:**
+```bash
+# Push current branch to remote
+git push origin <branch-name>
+
+# Push and set upstream tracking
+git push -u origin <branch-name>
+
+# Push all tags
+git push --tags
+```
+
+### Branching Best Practices
+
+1. **Main branch protection**
+   - Never commit directly to `main`
+   - Always work on feature branches
+   - Require PR reviews for merging
+
+2. **Feature branch naming**
+   ```bash
+   # Pattern: type/description
+   feat/animation-agent-implementation
+   fix/detail-agent-validation-bug
+   docs/update-workflow-guide
+   refactor/simplify-state-management
+   ```
+
+3. **Branch workflow**
+   ```bash
+   # Create new feature branch
+   git checkout -b feat/new-feature
+   
+   # Make changes and commit regularly
+   git add .
+   git commit -m "feat: implement new feature"
+   
+   # Push branch to remote
+   git push -u origin feat/new-feature
+   
+   # Keep branch updated with main
+   git checkout main
+   git pull origin main
+   git checkout feat/new-feature
+   git merge main
+   
+   # Or use rebase for cleaner history
+   git rebase main
+   ```
+
+4. **Branch lifecycle**
+   - Create branch from `main`
+   - Develop and commit regularly
+   - Push to remote frequently
+   - Create PR when ready
+   - Merge after review
+   - Delete branch after merge
+
+### Git Commands Reference
+
+**Basic workflow:**
+```bash
+# Check status
+git status
+
+# Stage files
+git add <file>
+git add .  # Stage all changes
+
+# Commit changes
+git commit -m "type(scope): message"
+
+# Push to remote
+git push origin <branch-name>
+
+# Pull latest changes
+git pull origin main
+
+# View commit history
+git log --oneline --graph --decorate
+```
+
+**Working with branches:**
+```bash
+# List branches
+git branch -a
+
+# Create and switch to new branch
+git checkout -b <branch-name>
+
+# Switch branches
+git checkout <branch-name>
+
+# Delete local branch
+git branch -d <branch-name>
+
+# Delete remote branch
+git push origin --delete <branch-name>
+```
+
+**Undoing changes:**
+```bash
+# Discard unstaged changes
+git checkout -- <file>
+
+# Unstage files
+git reset HEAD <file>
+
+# Amend last commit
+git commit --amend
+
+# Revert a commit
+git revert <commit-hash>
+```
+
+### Integration with Workflow
+
+Version control should be seamlessly integrated into your development workflow:
+
+1. **Start work** → Create/switch to feature branch
+2. **Make changes** → Edit files
+3. **Test** → Run tests locally
+4. **Log** → Update [`agent-log.md`](agent-log.md)
+5. **Commit** → Save changes with descriptive message
+6. **Continue or finish** → Repeat or push to remote
+
+**Example workflow:**
+```bash
+# Starting a new task
+git checkout -b feat/implement-palette-agent
+git push -u origin feat/implement-palette-agent
+
+# During development (repeat as needed)
+# ... make changes ...
+pytest tests/test_palette_agent.py
+# ... update agent-log.md ...
+git add src/agents/palette_agent.py tests/test_palette_agent.py agent-log.md
+git commit -m "feat(palette-agent): implement color harmony generation"
+
+# End of work session
+git push origin feat/implement-palette-agent
+```
+
+### Handling Large Changes
+
+For complex tasks spanning multiple sessions:
+
+1. **Break into smaller commits**
+   - Each commit should be atomic and logical
+   - Commit partial progress with clear messages
+   - Use prefixes like `wip:` for work-in-progress
+
+2. **Use feature flags** (if applicable)
+   - Keep incomplete features disabled
+   - Commit regularly without breaking main
+
+3. **Maintain commit hygiene**
+   - Squash fixup commits before merging
+   - Rebase for cleaner history
+   - Keep commit messages descriptive
+
+**Example:**
+```bash
+# Working on large feature
+git commit -m "wip(detail-agent): add basic structure"
+git commit -m "wip(detail-agent): implement validation"
+git commit -m "feat(detail-agent): complete Manifest JSON generation"
+
+# Before merging, squash WIP commits
+git rebase -i HEAD~3
+```
+
 
 ---
 
@@ -517,22 +797,34 @@ For each task, follow this cycle:
 4. Choose appropriate Roo mode
    └─> Select based on task type
 
-5. Implement changes
+5. Create/switch to feature branch (if needed)
+   └─> git checkout -b feat/task-name
+
+6. Implement changes
    └─> Follow established patterns
 
-6. Write/update tests
+7. Write/update tests
    └─> Ensure coverage >80%
 
-7. Validate against standards
+8. Validate against standards
    └─> Run mypy, ruff, pytest
 
-8. Log actions to agent-log.md
+9. Log actions to agent-log.md
    └─> Document what was done
 
-9. Update documentation
-   └─> Keep README current
+10. Commit changes to git
+    └─> git add . && git commit -m "type(scope): description"
+    └─> Use conventional commits format
+    └─> Commit after each significant milestone
 
-10. Pass instructions forward
+11. Update documentation
+    └─> Keep README current
+
+12. Push to remote (at session end or major milestones)
+    └─> git push origin <branch-name>
+    └─> Backup work and enable collaboration
+
+13. Pass instructions forward
     └─> Include agent-instruction.md in subtasks
 ```
 
@@ -568,7 +860,9 @@ Before considering any task complete:
 - [ ] Type checking passes (`mypy src`)
 - [ ] Linting passes (`ruff src`)
 - [ ] Documentation updated
-- [ ] Action logged to agent-log.md
+- [ ] Action logged to [`agent-log.md`](agent-log.md)
+- [ ] Changes committed to git with descriptive message
+- [ ] Changes pushed to remote repository (if appropriate)
 - [ ] Changes aligned with current phase
 - [ ] MCP servers evaluated for task
 - [ ] Appropriate mode used

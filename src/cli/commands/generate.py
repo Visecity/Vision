@@ -24,6 +24,8 @@ from src.cli.utils import (
     save_manifest,
     save_metadata,
 )
+from src.utils.file_manager import derive_asset_name, organize_output_files
+from src.rendering.manifest_renderer import ManifestRenderer
 from src.core.config import get_settings
 from src.core.models import (
     AnimationConfig,
@@ -78,6 +80,26 @@ def generate(
         "--frame-duration",
         help="Frame duration in milliseconds (only used with --animate)",
     ),
+    name: Optional[str] = typer.Option(
+        None,
+        "--name",
+        help="Custom asset name (default: derived from description)",
+    ),
+    no_render: bool = typer.Option(
+        False,
+        "--no-render",
+        help="Skip automatic PNG rendering (generate JSON only)",
+    ),
+    category: Optional[str] = typer.Option(
+        None,
+        "--category",
+        help="Asset category for organization (e.g., 'items', 'characters')",
+    ),
+    render_scale: int = typer.Option(
+        1,
+        "--render-scale",
+        help="PNG scale factor (1-16, default: 1)",
+    ),
     session_id: Optional[str] = typer.Option(
         None,
         "--session-id",
@@ -115,11 +137,20 @@ def generate(
 
     Examples:
 
-        # Generate a simple sprite
+        # Generate a simple sprite with auto-rendering
         vision generate "oak tree"
 
-        # Generate with custom dimensions and style
-        vision generate "warrior character" --dimensions 32x32 --style retro_8bit
+        # Generate with custom name
+        vision generate "wooden chest" --name chest_wood --dimensions 16x16
+
+        # Skip rendering (manifest only)
+        vision generate "sword sprite" --no-render
+
+        # With category organization
+        vision generate "health potion" --category items --dimensions 12x16
+
+        # Scaled rendering
+        vision generate "player character" --render-scale 4 --dimensions 32x32
 
         # Generate animated sprite
         vision generate "walking farmer" --animate --frames 8
@@ -199,29 +230,64 @@ def generate(
         # Get session ID
         session = get_session_id(session_id)
 
+        # Validate render_scale
+        if render_scale < 1 or render_scale > 16:
+            console.print(f"[bold red]Error:[/bold red] render-scale must be between 1 and 16")
+            raise typer.Exit(1)
+
         # Get output directory
         settings = get_settings()
         base_output = output_dir or settings.output.output_dir
         request_output_dir = get_output_directory(base_output, str(request.request_id))
+
+        # Derive asset name if not provided
+        asset_name = name or derive_asset_name(description)
+
+        # Organize output files with category
+        file_paths = organize_output_files(asset_name, request_output_dir, category)
 
         # Execute workflow
         result = asyncio.run(_execute_generation(request, session, verbose))
 
         # Save results
         if result.status.value == "completed":
+            manifest_path = None
+            png_path = None
+
             if result.manifest_json:
                 manifest_path = save_manifest(
                     result.manifest_json,
-                    request_output_dir,
+                    file_paths['directory'],
+                    filename=f"{asset_name}.json",
                 )
                 if not json_output:
                     console.print(f"[green]✓[/green] Manifest saved to: {manifest_path}")
 
+                # Render to PNG unless --no-render specified
+                if not no_render:
+                    try:
+                        renderer = ManifestRenderer(scale=render_scale, include_metadata=True)
+                        png_path = renderer.render_manifest_sync(
+                            result.manifest_json,
+                            file_paths['directory'] / f"{asset_name}.png",
+                        )
+                        if not json_output:
+                            console.print(f"[green]✓[/green] PNG rendered to: {png_path}")
+                    except Exception as e:
+                        console.print(f"[yellow]⚠[/yellow] Rendering failed: {e}")
+                        if verbose:
+                            logger.error(f"Rendering error: {e}", exc_info=True)
+
             if result.metadata:
                 metadata_dict = result.metadata.model_dump()
+                # Add file paths to metadata
+                metadata_dict['files'] = {
+                    'manifest': str(manifest_path) if manifest_path else None,
+                    'png': str(png_path) if png_path else None,
+                }
                 metadata_path = save_metadata(
                     metadata_dict,
-                    request_output_dir,
+                    file_paths['directory'],
                 )
                 if not json_output:
                     console.print(f"[green]✓[/green] Metadata saved to: {metadata_path}")
@@ -238,7 +304,10 @@ def generate(
 
             if result.status.value == "completed":
                 console.print(f"\n[bold green]✓ Generation complete![/bold green]")
-                console.print(f"Output directory: [cyan]{request_output_dir}[/cyan]")
+                console.print(f"Asset name: [cyan]{asset_name}[/cyan]")
+                console.print(f"Output directory: [cyan]{file_paths['directory']}[/cyan]")
+                if category:
+                    console.print(f"Category: [cyan]{category}[/cyan]")
             else:
                 console.print(f"\n[bold red]✗ Generation failed[/bold red]")
                 if result.error_message:

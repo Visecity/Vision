@@ -3,11 +3,18 @@ Detail Agent for Vision pixel art generation system.
 
 This agent implements design specifications at the pixel level, applying
 color palettes with proper shading, highlights, and texture details.
+
+Supports multiple encoding formats:
+- Standard grid: For small sprites (<256 pixels)
+- RLE: For larger sprites (>256 pixels)
+- Palette indexing + RLE: For sprites with ≤16 colors (best compression)
 """
 
 import json
 import logging
+import time
 from typing import Any
+from datetime import datetime
 
 from src.agents.base import (
     AgentCapability,
@@ -16,11 +23,33 @@ from src.agents.base import (
     ProcessingError,
     ValidationError,
 )
+from src.agents.detail_schemas import (
+    DetailAgentOutput,
+    DetailAgentOutputRLE,
+    DetailAgentOutputPaletteIndexed,
+)
 from src.agents.prompts import (
     DETAIL_AGENT_SYSTEM,
     DETAIL_OUTPUT_SCHEMA,
     format_detail_prompt,
 )
+from src.rendering.rle_decoder import decode_rle_to_grid, calculate_compression_ratio
+from src.rendering.palette_encoder import (
+    decode_palette_indexed,
+    calculate_palette_compression_ratio,
+)
+from src.rendering.complexity_analyzer import (
+    estimate_complexity_from_design,
+    recommend_encoding_strategy,
+    get_compression_estimate,
+)
+from src.rendering.metadata_schema import (
+    SpriteMetadata,
+    ComplexityMetrics,
+    EncodingDecision,
+    PerformanceMetrics,
+)
+from src.rendering.metadata_collector import MetadataCollector
 from src.core.models import (
     AgentContext,
     AgentRole,
@@ -127,6 +156,9 @@ class DetailAgent(BaseAgent[AgentContext, dict[str, Any]]):
             ProcessingError: If detail generation fails
             ValidationError: If output validation fails
         """
+        # Start timing for performance metrics
+        process_start_time = time.perf_counter()
+        
         try:
             logger.info(f"Processing details for request: {context.request.request_id}")
 
@@ -164,7 +196,71 @@ class DetailAgent(BaseAgent[AgentContext, dict[str, Any]]):
 
             logger.debug(f"User prompt: {user_prompt[:200]}...")
 
-            # Call LLM with system prompt
+            # Determine optimal encoding strategy using complexity analysis
+            dimensions = context.request.dimensions
+            pixel_count = dimensions.width * dimensions.height
+            is_animated = context.request.animation is not None
+            palette_size = len(palette_colors)
+            
+            # Estimate sprite complexity from design specification
+            logger.info("Analyzing sprite complexity from design specification")
+            analysis_start_time = time.perf_counter()
+            complexity_metrics = estimate_complexity_from_design(design_spec)
+            analysis_time_ms = (time.perf_counter() - analysis_start_time) * 1000
+            
+            # Get encoding recommendation based on complexity
+            recommended_encoding = recommend_encoding_strategy(
+                complexity=complexity_metrics,
+                pixel_count=pixel_count,
+                palette_size=palette_size
+            )
+            
+            # Get compression estimates for the recommended encoding
+            compression_estimate = get_compression_estimate(
+                complexity=complexity_metrics,
+                pixel_count=pixel_count,
+                encoding=recommended_encoding
+            )
+            
+            logger.info(
+                f"Complexity analysis complete: "
+                f"entropy={complexity_metrics['entropy']:.3f}, "
+                f"repetition={complexity_metrics['repetition_score']:.3f}, "
+                f"structure={complexity_metrics['structure_score']:.3f}, "
+                f"rle_ratio={complexity_metrics['estimated_rle_ratio']:.3f}"
+            )
+            logger.info(
+                f"Recommended encoding: {recommended_encoding} "
+                f"(estimated compression: {compression_estimate['compression_ratio']:.3f}, "
+                f"tokens: {compression_estimate['token_estimate']})"
+            )
+            
+            # Map recommended encoding to implementation flags
+            use_palette_indexing = recommended_encoding == "palette_indexed_rle"
+            use_rle = recommended_encoding == "rle"
+            
+            if use_palette_indexing:
+                logger.info(
+                    f"Using palette indexing for {dimensions.width}x{dimensions.height} sprite "
+                    f"with {palette_size} colors"
+                )
+                output_format = DetailAgentOutputPaletteIndexed
+                system_prompt = self._get_palette_indexed_system_prompt()
+            elif use_rle:
+                logger.info(
+                    f"Using RLE encoding for {dimensions.width}x{dimensions.height} "
+                    f"({'animated' if is_animated else 'static'}) sprite"
+                )
+                output_format = DetailAgentOutputRLE
+                system_prompt = self._get_rle_system_prompt()
+            else:
+                logger.info(
+                    f"Using standard grid format for {dimensions.width}x{dimensions.height} sprite"
+                )
+                output_format = DetailAgentOutput
+                system_prompt = DETAIL_AGENT_SYSTEM
+
+            # Call LLM with structured output
             response = await self.llm_client.create_message(
                 model=self.model_name,
                 messages=[
@@ -173,26 +269,165 @@ class DetailAgent(BaseAgent[AgentContext, dict[str, Any]]):
                         "content": user_prompt,
                     }
                 ],
-                max_tokens=8192,  # Larger for detailed pixel grids
-                temperature=0.6,  # Moderate creativity but more precision
-                system=DETAIL_AGENT_SYSTEM,
+                max_tokens=8192,
+                temperature=0.6,
+                system=system_prompt,
+                response_format=output_format,
             )
 
-            # Extract and parse response
+            # Extract structured response
             response_text = response.content[0].text  # type: ignore
             logger.debug(f"LLM response: {response_text[:200]}...")
 
-            # Parse JSON from response
-            detail_spec = self._extract_json(response_text)
+            # Parse structured output
+            try:
+                parsed_output = output_format.model_validate_json(response_text)
+            except Exception as parse_error:
+                logger.error(f"Failed to parse structured output: {parse_error}")
+                raise ProcessingError(
+                    agent_role=self.role,
+                    message=f"Failed to parse structured output: {parse_error}",
+                    context={"response_text": response_text[:500]},
+                )
 
-            # Add metadata
-            detail_spec["_metadata"] = {
-                "agent": self.role.value,
-                "model": self.model_name,
-                "request_id": str(context.request.request_id),
-                "dimensions": f"{context.request.dimensions.width}x{context.request.dimensions.height}",
-                "palette_size": len(palette_colors),
-            }
+            # Convert Pydantic model to dict
+            detail_spec = parsed_output.model_dump()
+            
+            # Decode compressed formats to standard grid
+            if use_palette_indexing:
+                pixel_grid = detail_spec.get("pixel_grid", {})
+                if pixel_grid.get("encoding") == "palette_indexed_rle":
+                    logger.info("Decoding palette-indexed RLE to standard grid format")
+                    
+                    try:
+                        # Decode palette-indexed data with auto-correction
+                        palette = pixel_grid.get("palette", [])
+                        rle_segments = pixel_grid.get("data", [])
+                        
+                        decoded_grid = decode_palette_indexed(
+                            pixel_grid["width"],
+                            pixel_grid["height"],
+                            palette,
+                            rle_segments,
+                            auto_correct=True,
+                            tolerance=0.05
+                        )
+                        
+                        # Calculate compression metrics
+                        compression_metrics = calculate_palette_compression_ratio(
+                            len(palette),
+                            len(rle_segments),
+                            pixel_grid["width"],
+                            pixel_grid["height"]
+                        )
+                        
+                        # Replace with decoded grid
+                        detail_spec["pixel_grid"]["data"] = decoded_grid
+                        detail_spec["pixel_grid"]["encoding"] = "grid"
+                        detail_spec["pixel_grid"]["format"] = "row-major array of hex colors"
+                        
+                        # Add palette indexing metadata
+                        detail_spec["pixel_grid"]["_palette_indexed_metadata"] = {
+                            "was_palette_indexed": True,
+                            "palette_size": len(palette),
+                            "segment_count": len(rle_segments),
+                            "compression_vs_grid_percent": compression_metrics["vs_grid_percent"],
+                            "compression_vs_rle_percent": compression_metrics["vs_standard_rle_percent"],
+                            "estimated_tokens": compression_metrics["estimated_tokens"],
+                            "actual_compression_ratio": compression_metrics["compression_ratio"],
+                        }
+                        
+                        logger.info(
+                            f"Palette indexing successful: {len(palette)} colors, "
+                            f"{len(rle_segments)} segments -> {pixel_grid['width']}x{pixel_grid['height']} grid "
+                            f"(compression vs grid: {compression_metrics['vs_grid_percent']:.1f}%, "
+                            f"vs RLE: {compression_metrics['vs_standard_rle_percent']:.1f}%)"
+                        )
+                        
+                    except Exception as decode_error:
+                        logger.error(f"Palette indexing decoding failed: {decode_error}")
+                        raise ProcessingError(
+                            agent_role=self.role,
+                            message=f"Failed to decode palette-indexed data: {decode_error}",
+                            context={
+                                "palette_size": len(pixel_grid.get("palette", [])),
+                                "segment_count": len(pixel_grid.get("data", []))
+                            },
+                        )
+            
+            elif use_rle:
+                pixel_grid = detail_spec.get("pixel_grid", {})
+                if pixel_grid.get("encoding") == "rle":
+                    logger.info("Decoding RLE to standard grid format")
+                    
+                    try:
+                        # Decode RLE data with auto-correction
+                        decoded_grid = decode_rle_to_grid(
+                            pixel_grid["width"],
+                            pixel_grid["height"],
+                            pixel_grid.get("data", []),
+                            auto_correct=True,
+                            tolerance=0.05
+                        )
+                        
+                        # Calculate compression ratio
+                        compression = calculate_compression_ratio(
+                            pixel_grid["width"],
+                            pixel_grid["height"],
+                            len(pixel_grid.get("data", []))
+                        )
+                        
+                        # Replace with decoded grid
+                        detail_spec["pixel_grid"]["data"] = decoded_grid
+                        detail_spec["pixel_grid"]["encoding"] = "grid"
+                        detail_spec["pixel_grid"]["format"] = "row-major array of hex colors"
+                        
+                        # Add RLE metadata
+                        detail_spec["pixel_grid"]["_rle_metadata"] = {
+                            "was_rle": True,
+                            "segment_count": len(pixel_grid.get("data", [])),
+                            "actual_compression_ratio": compression,
+                            "compression_percent": round((1 - compression) * 100, 1),
+                        }
+                        
+                        logger.info(
+                            f"RLE decoding successful: {len(pixel_grid.get('data', []))} segments -> "
+                            f"{pixel_grid['width']}x{pixel_grid['height']} grid "
+                            f"({(1-compression)*100:.1f}% compression)"
+                        )
+                        
+                    except Exception as decode_error:
+                        logger.error(f"RLE decoding failed: {decode_error}")
+                        raise ProcessingError(
+                            agent_role=self.role,
+                            message=f"Failed to decode RLE data: {decode_error}",
+                            context={
+                                "segment_count": len(pixel_grid.get("data", []))
+                            },
+                        )
+
+            # Build complete metadata using new schema
+            sprite_metadata = self._build_sprite_metadata(
+                context=context,
+                complexity_metrics=complexity_metrics,
+                recommended_encoding=recommended_encoding,
+                compression_estimate=compression_estimate,
+                analysis_time_ms=analysis_time_ms,
+                palette_colors=palette_colors,
+                use_palette_indexing=use_palette_indexing,
+                use_rle=use_rle,
+                detail_spec=detail_spec,
+            )
+            
+            # Add metadata to result (backward compatibility)
+            detail_spec["_metadata"] = sprite_metadata
+            
+            # Collect metadata for monitoring (non-blocking)
+            try:
+                collector = MetadataCollector()
+                collector.collect(sprite_metadata)
+            except Exception as e:
+                logger.warning(f"Failed to collect metadata: {e}")
 
             logger.info("Detail specification generated successfully")
             return detail_spec
@@ -389,6 +624,232 @@ class DetailAgent(BaseAgent[AgentContext, dict[str, Any]]):
         # Parse JSON
         return json.loads(text)
 
+    def _get_rle_system_prompt(self) -> str:
+        """
+        Get the system prompt for RLE output.
+        
+        Returns:
+            str: System prompt that instructs the LLM to use RLE encoding
+        """
+        return """You are a pixel art implementation agent using RLE (Run-Length Encoding) for efficient output.
+
+CRITICAL OUTPUT FORMAT - RLE:
+Instead of listing every pixel individually, group consecutive pixels of the same color.
+
+RLE Format: {"color": "#RRGGBB", "count": N}
+
+Example for 4×4 red-green pattern (RRRR GGGG RRRR GGGG):
+[
+  {"color": "#FF0000", "count": 4},
+  {"color": "#00FF00", "count": 4},
+  {"color": "#FF0000", "count": 4},
+  {"color": "#00FF00", "count": 4}
+]
+
+Total pixels: 4+4+4+4 = 16 (matches 4×4)
+
+IMPORTANT Rules:
+1. Colors must be 6-character hex: #RRGGBB (or "transparent")
+2. Total pixel count must equal width times height
+3. Each segment must have count ≥ 1
+4. Segments flow left-to-right, top-to-bottom (row-major order)
+
+You will receive design specifications and color palettes. Implement the pixel art using RLE encoding for maximum efficiency."""
+
+    def _get_palette_indexed_system_prompt(self) -> str:
+        """
+        Get the system prompt for palette-indexed output.
+        
+        Returns:
+            str: System prompt that instructs the LLM to use palette indexing + RLE
+        """
+        return """You are a pixel art implementation agent using PALETTE INDEXING + RLE for maximum compression efficiency.
+
+CRITICAL OUTPUT FORMAT - PALETTE INDEXING:
+Instead of repeating hex codes for every pixel, define a color palette once and reference colors by index.
+
+Palette Indexing Format:
+1. Define palette: list of hex colors used in sprite (max 16 colors recommended)
+2. Use indices 0-14 for palette colors, index 255 for transparent
+3. Encode pixel runs using {"idx": N, "count": M}
+4. Segments flow left-to-right, top-to-bottom (row-major order)
+
+Format Structure:
+{
+  "palette": ["#FF0000", "#00FF00", "#0000FF"],
+  "data": [
+    {"idx": 0, "count": 50},
+    {"idx": 1, "count": 30},
+    {"idx": 255, "count": 20}
+  ]
+}
+
+Example for 4×4 sprite with 3 colors:
+Red-Green pattern (RR GG / RR BB / GG BB / RR GG)
+
+Palette: ["#FF0000", "#00FF00", "#0000FF"]
+
+RLE with indices:
+[
+  {"idx": 0, "count": 2},
+  {"idx": 1, "count": 2},
+  {"idx": 0, "count": 2},
+  {"idx": 2, "count": 2},
+  {"idx": 1, "count": 2},
+  {"idx": 2, "count": 2},
+  {"idx": 0, "count": 2},
+  {"idx": 1, "count": 2}
+]
+Total: 2+2+2+2+2+2+2+2 = 16 (matches 4×4)
+
+Benefits of Palette Indexing:
+- 60-75% smaller than standard RLE (for sprites with 16 or fewer colors)
+- 85-90% smaller than standard grid format
+- Perfect for pixel art which typically uses 4-16 colors
+- Maintains perfect color accuracy
+
+IMPORTANT Rules:
+1. Palette must contain ALL colors used (except transparent)
+2. Maximum 255 colors in palette, index 255 reserved for transparent
+3. Each color in palette must be 6-character hex: #RRGGBB
+4. Indices must reference valid palette positions
+5. Total pixel count must equal width times height
+
+You will receive design specifications and a color palette. Implement the pixel art using palette indexing for maximum efficiency."""
+
     def __repr__(self) -> str:
         """String representation of the agent."""
         return f"DetailAgent(model={self.model_name}, role={self.role.value})"
+    def _build_sprite_metadata(
+        self,
+        context: AgentContext,
+        complexity_metrics: dict[str, Any],
+        recommended_encoding: str,
+        compression_estimate: dict[str, Any],
+        analysis_time_ms: float,
+        palette_colors: list[str],
+        use_palette_indexing: bool,
+        use_rle: bool,
+        detail_spec: dict[str, Any],
+    ) -> SpriteMetadata:
+        """
+        Build complete SpriteMetadata for monitoring.
+        
+        Args:
+            context: Processing context
+            complexity_metrics: Complexity analysis results
+            recommended_encoding: Recommended encoding strategy
+            compression_estimate: Compression estimates
+            analysis_time_ms: Time spent on analysis
+            palette_colors: List of palette colors
+            use_palette_indexing: Whether palette indexing was used
+            use_rle: Whether RLE was used
+            detail_spec: Generated detail specification
+            
+        Returns:
+            Complete SpriteMetadata object
+        """
+        # Extract actual compression data if available
+        actual_compression = None
+        if use_palette_indexing and "_palette_indexed_metadata" in detail_spec.get("pixel_grid", {}):
+            palette_meta = detail_spec["pixel_grid"]["_palette_indexed_metadata"]
+            actual_compression = palette_meta.get("actual_compression_ratio")
+        elif use_rle and "_rle_metadata" in detail_spec.get("pixel_grid", {}):
+            rle_meta = detail_spec["pixel_grid"]["_rle_metadata"]
+            actual_compression = rle_meta.get("actual_compression_ratio")
+        
+        # Calculate prediction accuracy if actual data available
+        prediction_accuracy = None
+        if actual_compression is not None:
+            estimated = compression_estimate["compression_ratio"]
+            prediction_error = abs(estimated - actual_compression) / actual_compression if actual_compression > 0 else 0
+            prediction_accuracy = prediction_error * 100
+            
+            logger.info(
+                f"Compression prediction accuracy: "
+                f"estimated={estimated:.3f}, actual={actual_compression:.3f}, "
+                f"error={prediction_accuracy:.1f}%"
+            )
+        
+        # Build encoding decision
+        selected_encoding = "palette_indexed_rle" if use_palette_indexing else ("rle" if use_rle else "standard")
+        
+        # Generate decision reason
+        reasons = [self._get_decision_reason(
+            recommended_encoding,
+            complexity_metrics,
+            context.request.dimensions.width * context.request.dimensions.height,
+            len(palette_colors)
+        )]
+        
+        encoding_decision: EncodingDecision = {
+            "recommended_encoding": recommended_encoding,
+            "selected_encoding": selected_encoding,
+            "reasons": reasons,
+            "estimated_compression": compression_estimate["compression_ratio"],
+            "actual_compression": actual_compression,
+        }
+        
+        # Build performance metrics
+        performance_metrics: PerformanceMetrics = {
+            "analysis_time_ms": analysis_time_ms,
+            "prediction_accuracy_percent": prediction_accuracy,
+        }
+        
+        # Build complete metadata
+        metadata: SpriteMetadata = {
+            "request_id": str(context.request.request_id),
+            "agent": self.role.value,
+            "model": self.model_name,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "dimensions": f"{context.request.dimensions.width}x{context.request.dimensions.height}",
+            "pixel_count": context.request.dimensions.width * context.request.dimensions.height,
+            "palette_size": len(palette_colors),
+            "asset_type": context.request.asset_type.value,
+            "is_animated": context.request.animation is not None,
+            "complexity_metrics": complexity_metrics,
+            "encoding_decision": encoding_decision,
+            "performance_metrics": performance_metrics,
+            "meets_performance_target": analysis_time_ms < 10.0,
+            "meets_accuracy_target": prediction_accuracy < 15.0 if prediction_accuracy is not None else None,
+        }
+        
+        return metadata
+    
+    def _get_decision_reason(
+        self,
+        encoding: str,
+        complexity: dict[str, Any],
+        pixel_count: int,
+        palette_size: int
+    ) -> str:
+        """
+        Generate human-readable decision explanation.
+        
+        Args:
+            encoding: Selected encoding strategy
+            complexity: Complexity metrics
+            pixel_count: Number of pixels
+            palette_size: Number of colors
+            
+        Returns:
+            Human-readable explanation of encoding choice
+        """
+        if encoding == "palette_indexed_rle":
+            return (
+                f"Palette indexing selected: {palette_size} colors (≤16 threshold), "
+                f"{pixel_count} pixels (>128 threshold). "
+                f"Expected {(1-complexity['estimated_rle_ratio'])*100:.0f}% compression."
+            )
+        elif encoding == "rle":
+            return (
+                f"RLE selected: {pixel_count} pixels (>256 threshold) OR "
+                f"high repetition (ratio={complexity['estimated_rle_ratio']:.2f} < 0.4). "
+                f"Expected {(1-complexity['estimated_rle_ratio'])*100:.0f}% compression."
+            )
+        else:
+            return (
+                f"Standard grid selected: {pixel_count} pixels (≤256) with "
+                f"moderate complexity (entropy={complexity['entropy']:.2f}). "
+                f"RLE overhead not justified."
+            )

@@ -1,0 +1,77 @@
+# Phase 8.3: Tools & Equipment Assets
+# Game tools, weapons, and equipment items in Stardew Valley style
+#
+# This batch generates tool icons for the player's inventory and equipment,
+# plus weapon swing effect animations for combat.
+
+batch_name: "phase_8_3_tools_equipment"
+output_dir: "./Aris/phase-8-3"
+create_atlas: true
+parallel_count: 3
+style: "stardew_valley"
+
+# Atlas configuration
+atlas_config:
+  algorithm: "MAXRECTS"
+  padding: 2
+  max_size: [1024, 1024]
+  power_of_two: true
+
+# Default dimensions for most tools
+default_dimensions:
+  width: 16
+  height: 16
+
+# Asset definitions
+assets:
+  # FARMING TOOLS
+  - description: "16x16 pixel hoe farming tool icon in Stardew Valley style. Brown L-shaped wooden handle with gray metal blade head. Top-down perspective, simple and recognizable design. Clean pixel art with black outline, suitable for inventory display."
+    name: "tool_hoe"
+    category: "tools"
+    tags: ["tool", "farming", "hoe"]
+    
+  - description: "16x16 pixel watering can tool icon in Stardew Valley style. Blue/gray metal watering can with brown handle and spout. Top-down perspective showing can body and spout clearly. Clean pixel art with black outline, inventory icon style."
+    name: "tool_watering_can"
+    category: "tools"
+    tags: ["tool", "farming", "watering"]
+    
+  # HARVESTING TOOLS
+  - description: "16x16 pixel axe tool icon in Stardew Valley style. Gray metal blade with brown wooden handle. Side view showing blade head and handle clearly. Sharp geometric blade shape. Clean pixel art with black outline, inventory icon."
+    name: "tool_axe"
+    category: "tools"
+    tags: ["tool", "harvesting", "axe", "woodcutting"]
+    
+  - description: "16x16 pixel pickaxe tool icon in Stardew Valley style. Gray pointed metal pickaxe head with brown wooden handle. Side view showing pick point and handle. Mining tool design. Clean pixel art with black outline, inventory icon."
+    name: "tool_pickaxe"
+    category: "tools"
+    tags: ["tool", "mining", "pickaxe"]
+    
+  - description: "16x16 pixel scythe tool icon in Stardew Valley style. Silver curved blade with long brown wooden handle. Side view showing characteristic curved blade. Farming/harvesting tool. Clean pixel art with black outline, inventory icon."
+    name: "tool_scythe"
+    category: "tools"
+    tags: ["tool", "farming", "scythe", "harvesting"]
+    
+  # FISHING
+  - description: "16x16 pixel fishing rod tool icon in Stardew Valley style. Brown wooden pole with thin fishing line visible. Side/diagonal view showing rod length and line. Simple recognizable fishing rod design. Clean pixel art with black outline, inventory icon."
+    name: "tool_fishing_rod"
+    category: "tools"
+    tags: ["tool", "fishing", "rod"]
+    
+  # WEAPONS
+  - description: "16x16 pixel sword weapon icon in Stardew Valley style. Silver/gray blade with brown and gold hilt. Side view showing full blade and handle. Classic medieval sword design. Clean pixel art with black outline, inventory icon suitable for combat weapon."
+    name: "weapon_sword"
+    category: "weapons"
+    tags: ["weapon", "sword", "melee", "combat"]
+    
+  - description: "16x16 pixel bow weapon icon in Stardew Valley style. Brown curved wooden bow with visible string. Side view showing characteristic bow curve and string tension. Ranged weapon design. Clean pixel art with black outline, inventory icon."
+    name: "weapon_bow"
+    category: "weapons"
+    tags: ["weapon", "bow", "ranged", "combat"]
+    
+  # WEAPON EFFECTS
+  - description: "16x32 pixel weapon swing slash effect animation in Stardew Valley style. Four-frame animation sequence showing white/light blue semi-transparent arc sweep. Arc motion for sword/axe swing. Frame 1: beginning of arc, Frame 2: mid-swing, Frame 3: full extension, Frame 4: fade out. Total dimensions: 64x32 (4 frames of 16x32 each arranged horizontally). Translucent effect suitable for overlay on character attacks."
+    name: "weapon_swing_effect"
+    dimensions: [64, 32]
+    category: "effects"
+    animated: true
+    tags: ["effect", "weapon", "swing", "combat", "animation"]

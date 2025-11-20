@@ -37,23 +37,23 @@ class ModelSettings(BaseSettings):
     """LLM model configuration for different agents."""
 
     orchestrator_model: str = Field(
-        default="claude-3-5-sonnet-20241022",
+        default="claude-sonnet-4-5",
         description="Model for orchestrator agent",
     )
     design_agent_model: str = Field(
-        default="claude-3-5-sonnet-20241022",
+        default="claude-sonnet-4-5",
         description="Model for design agent",
     )
     palette_agent_model: str = Field(
-        default="claude-3-5-sonnet-20241022",
+        default="claude-sonnet-4-5",
         description="Model for palette agent",
     )
     detail_agent_model: str = Field(
-        default="claude-3-5-sonnet-20241022",
+        default="claude-sonnet-4-5",
         description="Model for detail agent",
     )
     animation_agent_model: str = Field(
-        default="claude-3-5-sonnet-20241022",
+        default="claude-sonnet-4-5",
         description="Model for animation agent",
     )
 
@@ -139,6 +139,50 @@ class OutputSettings(BaseSettings):
         self.temp_dir.mkdir(parents=True, exist_ok=True)
 
 
+class RenderingConfig(BaseSettings):
+    """Configuration for automatic rendering of manifests to PNG."""
+
+    auto_render: bool = Field(
+        default=True,
+        description="Automatically render PNG from manifest JSON",
+    )
+    render_scale: int = Field(
+        default=1,
+        ge=1,
+        le=16,
+        description="PNG scaling factor (1-16)",
+    )
+    transparent_color: str = Field(
+        default="#FF00FF",
+        description="Color to treat as transparent (magenta by default)",
+    )
+    include_metadata: bool = Field(
+        default=True,
+        description="Embed generation metadata in PNG files",
+    )
+    fail_on_render_error: bool = Field(
+        default=False,
+        description="Fail generation if rendering fails (False = warn only)",
+    )
+    export_individual_frames: bool = Field(
+        default=False,
+        description="Export individual animation frames to separate files",
+    )
+
+    model_config = SettingsConfigDict(
+        env_prefix="RENDERING_",
+        case_sensitive=False,
+    )
+
+    @field_validator("transparent_color")
+    @classmethod
+    def validate_hex_color(cls, v: str) -> str:
+        """Validate hex color format."""
+        if not v.startswith("#") or len(v) not in (4, 7):
+            raise ValueError(f"Invalid hex color: {v}. Must be #RGB or #RRGGBB format")
+        return v
+
+
 class Settings(BaseSettings):
     """
     Main application settings.
@@ -178,6 +222,10 @@ class Settings(BaseSettings):
     output: OutputSettings = Field(
         default_factory=OutputSettings,
         description="Output directory settings",
+    )
+    rendering: RenderingConfig = Field(
+        default_factory=RenderingConfig,
+        description="Automatic rendering configuration",
     )
 
     # Optional integrations

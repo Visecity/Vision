@@ -14,7 +14,7 @@ import typer
 from rich.console import Console
 from rich.logging import RichHandler
 
-from src.cli.commands import config, generate, info, list_cmd, status
+from src.cli.commands import config, generate, info, list_cmd, status, batch, atlas, render
 
 # Create console for rich output
 console = Console()
@@ -30,6 +30,9 @@ app = typer.Typer(
 
 # Register subcommands
 app.command(name="generate", help="Generate a pixel art sprite")(generate.generate)
+app.command(name="generate-batch", help="Generate multiple assets from batch file")(batch.generate_batch)
+app.command(name="create-atlas", help="Create texture atlas from PNG assets")(atlas.create_atlas)
+app.command(name="render", help="Manually render manifest JSON to PNG")(render.render)
 app.command(name="status", help="Check workflow status")(status.status)
 app.command(name="list", help="List workflows")(list_cmd.list_workflows)
 app.command(name="config", help="Manage configuration")(config.config)

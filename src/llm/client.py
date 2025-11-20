@@ -14,6 +14,7 @@ from typing import Any, Literal
 
 from anthropic import Anthropic, AsyncAnthropic
 from anthropic.types import Message, MessageStreamEvent
+from pydantic import BaseModel
 from redis import Redis
 from redis.exceptions import RedisError
 
@@ -153,8 +154,10 @@ class CacheManager:
             key = self._make_key(model, messages, **kwargs)
             cached = self.redis.get(key)  # type: ignore
             if cached:
-                logger.debug(f"Cache hit for key: {key}")
+                logger.info(f"✅ Cache HIT - Reusing cached response (key: {key[:16]}...)")
                 return json.loads(cached)
+            else:
+                logger.debug(f"Cache MISS - Key not found (key: {key[:16]}...)")
         except (RedisError, json.JSONDecodeError) as e:
             logger.warning(f"Cache get error: {e}")
         return None
@@ -181,7 +184,7 @@ class CacheManager:
         try:
             key = self._make_key(model, messages, **kwargs)
             self.redis.setex(key, self.ttl, json.dumps(response))  # type: ignore
-            logger.debug(f"Cached response with key: {key}")
+            logger.info(f"💾 Cached response (TTL: {self.ttl}s, key: {key[:16]}...)")
         except (RedisError, json.JSONDecodeError) as e:
             logger.warning(f"Cache set error: {e}")
 
@@ -206,8 +209,34 @@ class LLMClient:
             redis_client: Redis client for caching (optional)
         """
         self.settings = settings or get_settings()
-        self.client = Anthropic(api_key=self.settings.anthropic_api_key)
-        self.async_client = AsyncAnthropic(api_key=self.settings.anthropic_api_key)
+        
+        # Detect if using OpenRouter (API key starts with 'sk-or-v1-')
+        api_key = self.settings.anthropic_api_key
+        if api_key.startswith('sk-or-v1-'):
+            # Using OpenRouter - configure base URL and headers
+            base_url = "https://openrouter.ai/api/v1"
+            logger.info("Detected OpenRouter API key, using OpenRouter endpoint")
+            
+            # OpenRouter requires additional headers
+            default_headers = {
+                "HTTP-Referer": "https://github.com/Visecity/Vision",
+                "X-Title": "Vision Pixel Art Generator"
+            }
+            
+            self.client = Anthropic(
+                api_key=api_key,
+                base_url=base_url,
+                default_headers=default_headers
+            )
+            self.async_client = AsyncAnthropic(
+                api_key=api_key,
+                base_url=base_url,
+                default_headers=default_headers
+            )
+        else:
+            # Using direct Anthropic API
+            self.client = Anthropic(api_key=api_key)
+            self.async_client = AsyncAnthropic(api_key=api_key)
 
         # Initialize components
         self.token_counter = TokenCounter()
@@ -231,7 +260,7 @@ class LLMClient:
         Create a message using Claude API with retries and caching.
 
         Args:
-            model: Model name (e.g., 'claude-3-5-sonnet-20241022')
+            model: Model name (e.g., 'claude-sonnet-4-5-20250929')
             messages: List of message dictionaries
             max_tokens: Maximum tokens to generate
             temperature: Sampling temperature
@@ -256,6 +285,7 @@ class LLMClient:
                 **kwargs,
             )
             if cached:
+                logger.info("🚀 Returning cached response - significant cost & time savings!")
                 return Message(**cached)
 
         # Apply rate limiting
@@ -383,6 +413,107 @@ class LLMClient:
         """Reset token usage counter."""
         self.token_counter.reset()
 
+    async def create_structured_message(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        output_format: type[BaseModel],
+        max_tokens: int = 8192,
+        temperature: float = 1.0,
+        system: str | None = None,
+        **kwargs: Any,
+    ) -> BaseModel:
+        """
+        Create a message with structured output using Anthropic's beta API.
+        
+        This enforces JSON schema validation at the API level, ensuring the response
+        matches the specified Pydantic model structure. This prevents malformed JSON
+        and invalid data structures.
+        
+        Args:
+            model: Model name (must support structured outputs: claude-sonnet-4-5)
+            messages: List of message dictionaries
+            output_format: Pydantic model defining the expected output structure
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature
+            system: Optional system prompt
+            **kwargs: Additional API parameters
+            
+        Returns:
+            BaseModel: Parsed output matching the output_format schema
+            
+        Raises:
+            Exception: If API call fails after retries
+            
+        Example:
+            >>> from src.agents.detail_schemas import DetailAgentOutput
+            >>> client = LLMClient()
+            >>> output = await client.create_structured_message(
+            ...     model="claude-sonnet-4-5",
+            ...     messages=[{"role": "user", "content": "Generate pixel art"}],
+            ...     output_format=DetailAgentOutput
+            ... )
+            >>> print(output.pixel_grid.width)  # Guaranteed to have this field
+        """
+        # Apply rate limiting
+        await self.rate_limiter.acquire()
+        
+        # Retry logic
+        max_retries = self.settings.performance.max_retries
+        timeout = self.settings.performance.timeout
+        
+        for attempt in range(max_retries + 1):
+            try:
+                logger.debug(f"Structured API call attempt {attempt + 1}/{max_retries + 1}")
+                
+                # Prepare API call parameters
+                api_params = {
+                    "model": model,
+                    "betas": ["structured-outputs-2025-11-13"],
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                    "output_format": output_format,
+                    **kwargs,
+                }
+                
+                # Only add system if provided (structured outputs requires list format)
+                if system:
+                    if isinstance(system, str):
+                        api_params["system"] = [{"type": "text", "text": system}]
+                    else:
+                        api_params["system"] = system
+                
+                response = await asyncio.wait_for(
+                    self.async_client.beta.messages.parse(**api_params),  # type: ignore
+                    timeout=timeout,
+                )
+                
+                # Track token usage
+                self.token_counter.add_usage(
+                    input_tokens=response.usage.input_tokens,
+                    output_tokens=response.usage.output_tokens,
+                )
+                
+                logger.info(f"✅ Structured output validated by API - guaranteed schema compliance")
+                
+                # Return the parsed output directly
+                return response.parsed_output
+                
+            except asyncio.TimeoutError:
+                logger.warning(f"Structured API call timeout (attempt {attempt + 1})")
+                if attempt == max_retries:
+                    raise
+                await asyncio.sleep(2**attempt)
+                
+            except Exception as e:
+                logger.error(f"Structured API call error (attempt {attempt + 1}): {e}")
+                if attempt == max_retries:
+                    raise
+                await asyncio.sleep(2**attempt)
+        
+        raise Exception("All retry attempts failed")
+
 
 def create_llm_client(
     settings: Settings | None = None,
@@ -401,7 +532,7 @@ def create_llm_client(
     Example:
         >>> client = create_llm_client()
         >>> response = await client.create_message(
-        ...     model="claude-3-5-sonnet-20241022",
+        ...     model="claude-sonnet-4-5-20250929",
         ...     messages=[{"role": "user", "content": "Hello!"}]
         ... )
     """

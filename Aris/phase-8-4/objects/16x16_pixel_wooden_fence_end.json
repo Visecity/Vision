@@ -1,0 +1,727 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "name": "16x16_pixel_wooden_fence_end",
+    "description": "16x16 pixel wooden fence end piece sprite in Stardew Valley style. Fence piece with connection on one side only, end cap design. Brown wood (#8B4513, #A0522D). Top-down view. End piece for fence lines. Shows post and horizontal rails connecting to one side. Clean pixel art with black outline.",
+    "canvas": {
+      "width": 16,
+      "height": 16
+    }
+  },
+  "layers": [
+    {
+      "name": "Main Layer",
+      "elements": [
+        {
+          "type": "pixel",
+          "x": 0,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 1,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 2,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 3,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 7,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 8,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 9,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 10,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 11,
+          "y": 0,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 0,
+          "y": 1,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 1,
+          "y": 1,
+          "fill": "#cd853f"
+        },
+        {
+          "type": "pixel",
+          "x": 2,
+          "y": 1,
+          "fill": "#cd853f"
+        },
+        {
+          "type": "pixel",
+          "x": 3,
+          "y": 1,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 1,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 1,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 1,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 7,
+          "y": 1,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 8,
+          "y": 1,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 9,
+          "y": 1,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 10,
+          "y": 1,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 11,
+          "y": 1,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 0,
+          "y": 2,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 1,
+          "y": 2,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 2,
+          "y": 2,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 3,
+          "y": 2,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 2,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 2,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 2,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 7,
+          "y": 2,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 8,
+          "y": 2,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 9,
+          "y": 2,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 10,
+          "y": 2,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 11,
+          "y": 2,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 0,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 1,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 2,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 3,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 7,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 8,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 9,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 10,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 11,
+          "y": 3,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 4,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 4,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 4,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 5,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 5,
+          "fill": "#cd853f"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 5,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 6,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 7,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 8,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 9,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 10,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 11,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 12,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 13,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 14,
+          "y": 6,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 7,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 7,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 7,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 7,
+          "y": 7,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 8,
+          "y": 7,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 9,
+          "y": 7,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 10,
+          "y": 7,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 11,
+          "y": 7,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 12,
+          "y": 7,
+          "fill": "#cd853f"
+        },
+        {
+          "type": "pixel",
+          "x": 13,
+          "y": 7,
+          "fill": "#cd853f"
+        },
+        {
+          "type": "pixel",
+          "x": 14,
+          "y": 7,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 8,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 8,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 8,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 7,
+          "y": 8,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 8,
+          "y": 8,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 9,
+          "y": 8,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 10,
+          "y": 8,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 11,
+          "y": 8,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 12,
+          "y": 8,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 13,
+          "y": 8,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 14,
+          "y": 8,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 9,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 7,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 8,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 9,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 10,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 11,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 12,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 13,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 14,
+          "y": 9,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 10,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 10,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 10,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 11,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 11,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 11,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 12,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 12,
+          "fill": "#a0522d"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 12,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 13,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 13,
+          "fill": "#8b4513"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 13,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 14,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 14,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 14,
+          "fill": "#000000"
+        },
+        {
+          "type": "pixel",
+          "x": 3,
+          "y": 15,
+          "fill": "#6b4423"
+        },
+        {
+          "type": "pixel",
+          "x": 4,
+          "y": 15,
+          "fill": "#6b4423"
+        },
+        {
+          "type": "pixel",
+          "x": 5,
+          "y": 15,
+          "fill": "#6b4423"
+        },
+        {
+          "type": "pixel",
+          "x": 6,
+          "y": 15,
+          "fill": "#6b4423"
+        }
+      ]
+    }
+  ],
+  "palette": {
+    "color1": "#000000",
+    "color2": "#6b4423",
+    "color3": "#8b4513",
+    "color4": "#a0522d",
+    "color5": "#cd853f"
+  }
+}

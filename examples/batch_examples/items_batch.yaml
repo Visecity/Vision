@@ -1,0 +1,78 @@
+# Vision Batch Generation Example - Game Items
+#
+# This example demonstrates how to define a batch of related assets
+# that will be generated together and optionally combined into a texture atlas.
+
+batch_name: "game_items"
+output_dir: "./output/items_batch"
+create_atlas: true
+atlas_name: "items_atlas"
+parallel_count: 2
+
+# Default settings applied to all assets (can be overridden per asset)
+default_style: "stardew_valley"
+default_dimensions:
+  width: 16
+  height: 16
+default_asset_type: "sprite"
+
+# Asset definitions
+assets:
+  # Containers
+  - description: "wooden chest with metal hinges for storing items"
+    name: "chest_wood"
+    category: "containers"
+    tags: ["furniture", "storage"]
+  
+  - description: "stone chest with heavy lid for valuable items"
+    name: "chest_stone"
+    category: "containers"
+    tags: ["furniture", "storage", "dungeon"]
+  
+  - description: "golden chest with ornate decorations and shine effect"
+    name: "chest_gold"
+    category: "containers"
+    tags: ["furniture", "storage", "rare"]
+  
+  # Potions
+  - description: "red health potion in a glass bottle"
+    name: "potion_health"
+    dimensions: [12, 16]
+    category: "consumables"
+    tags: ["potion", "healing"]
+  
+  - description: "blue mana potion in a glass bottle"
+    name: "potion_mana"
+    dimensions: [12, 16]
+    category: "consumables"
+    tags: ["potion", "magic"]
+  
+  - description: "green stamina potion in a glass bottle"
+    name: "potion_stamina"
+    dimensions: [12, 16]
+    category: "consumables"
+    tags: ["potion", "energy"]
+  
+  # Currency
+  - description: "gold coin with shine effect"
+    name: "coin_gold"
+    dimensions: [8, 8]
+    category: "currency"
+    tags: ["money", "loot"]
+  
+  - description: "silver coin with metallic sheen"
+    name: "coin_silver"
+    dimensions: [8, 8]
+    category: "currency"
+    tags: ["money", "loot"]
+  
+  # Tools
+  - description: "wooden pickaxe for mining stone"
+    name: "pickaxe_wood"
+    category: "tools"
+    tags: ["tool", "mining"]
+  
+  - description: "iron sword with leather grip"
+    name: "sword_iron"
+    category: "weapons"
+    tags: ["weapon", "melee"]

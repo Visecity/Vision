@@ -1,0 +1,104 @@
+# Phase 8.4: Environment Assets
+# Terrain tiles, environmental objects, and decorations in Stardew Valley style
+#
+# This batch generates static world objects including trees, rocks, ores,
+# and fences for the game environment.
+
+batch_name: "phase_8_4_environment"
+output_dir: "./Aris/phase-8-4"
+create_atlas: true
+parallel_count: 4
+style: "stardew_valley"
+
+# Atlas configuration - larger atlas for many terrain tiles
+atlas_config:
+  algorithm: "MAXRECTS"
+  padding: 2
+  max_size: [2048, 2048]
+  power_of_two: true
+
+# Asset definitions
+assets:
+  # TREES - Deciduous
+  - description: "16x32 pixel oak tree sprite in Stardew Valley style. Basic deciduous tree with rounded green canopy (#228B22) and brown trunk (#8B4513). Top-down orthographic perspective with slight front angle. Canopy occupies upper portion, trunk visible at bottom. Footprint is 12x8 pixels at trunk base. Tree extends upward from ground position. Clean pixel art with black outline, natural organic shape."
+    name: "tree_oak"
+    dimensions: [16, 32]
+    category: "terrain"
+    tags: ["tree", "nature", "oak", "environment"]
+    
+  # TREES - Evergreen
+  - description: "16x32 pixel pine tree sprite in Stardew Valley style. Evergreen conifer tree with triangular/conical shape. Dark green needles (#006400) and dark brown trunk (#654321). Top-down orthographic perspective. Characteristic pointed triangular silhouette of pine tree. Footprint is 12x8 pixels at trunk base. Clean pixel art with black outline, geometric triangular layers."
+    name: "tree_pine"
+    dimensions: [16, 32]
+    category: "terrain"
+    tags: ["tree", "nature", "pine", "evergreen", "environment"]
+    
+  # TREE STUMP
+  - description: "16x16 pixel tree stump sprite in Stardew Valley style. Chopped tree remnant showing circular trunk cross-section. Brown wood (#8B4513) with visible tree rings/growth rings in darker brown shades. Top-down view showing flat cut surface. Stump sits at ground level. Clean pixel art with black outline, organic circular shape with texture detail."
+    name: "tree_stump"
+    dimensions: [16, 16]
+    category: "terrain"
+    tags: ["stump", "tree", "chopped", "environment"]
+    
+  # ROCKS - Small
+  - description: "16x16 pixel small rock sprite in Stardew Valley style. Small gray stone/boulder. Gray color palette (#808080, #A9A9A9, #696969) with highlights and shadows for 3D roundness. Top-down orthographic view. Rough irregular organic shape typical of natural rock. Takes up most of 16x16 space. Clean pixel art with black outline."
+    name: "rock_small"
+    dimensions: [16, 16]
+    category: "terrain"
+    tags: ["rock", "stone", "obstacle", "environment"]
+    
+  # ROCKS - Large
+  - description: "16x24 pixel large boulder sprite in Stardew Valley style. Larger stone/boulder obstacle. Gray color palette (#808080, #A9A9A9, #696969, #555555) with highlights and shadows for volume. Top-down orthographic view. Bigger than small rock, more imposing presence. Rough irregular shape. Clean pixel art with black outline, takes up full 16x24 space."
+    name: "rock_large"
+    dimensions: [16, 24]
+    category: "terrain"
+    tags: ["rock", "boulder", "large", "obstacle", "environment"]
+    
+  # ORE NODES - Iron
+  - description: "16x16 pixel iron ore node sprite in Stardew Valley style. Rock with visible gray metallic iron ore veins. Base gray rock (#808080) with darker gray/silver metallic streaks (#696969, #C0C0C0) indicating iron deposits. Top-down view. Mineral resource node. Clean pixel art with black outline, obvious metallic ore patterns."
+    name: "ore_iron"
+    dimensions: [16, 16]
+    category: "resources"
+    tags: ["ore", "iron", "mining", "resource", "environment"]
+    
+  # ORE NODES - Copper
+  - description: "16x16 pixel copper ore node sprite in Stardew Valley style. Rock with visible orange/copper colored ore veins. Base gray rock (#808080) with orange-copper metallic streaks (#CD7F32, #D2691E, #FF8C00) indicating copper deposits. Top-down view. Mineral resource node. Clean pixel art with black outline, distinctive orange copper coloring."
+    name: "ore_copper"
+    dimensions: [16, 16]
+    category: "resources"
+    tags: ["ore", "copper", "mining", "resource", "environment"]
+    
+  # ORE NODES - Gold
+  - description: "16x16 pixel gold ore node sprite in Stardew Valley style. Rock with visible golden/yellow ore veins. Base gray rock (#808080) with bright golden yellow metallic streaks (#FFD700, #FFA500, #DAA520) indicating gold deposits. Top-down view. Precious mineral resource node. Clean pixel art with black outline, shiny golden appearance."
+    name: "ore_gold"
+    dimensions: [16, 16]
+    category: "resources"
+    tags: ["ore", "gold", "mining", "resource", "rare", "environment"]
+    
+  # FENCES - Wooden Fence Standalone
+  - description: "16x16 pixel wooden fence post standalone sprite in Stardew Valley style. Single vertical fence post with horizontal rails. Brown wood (#8B4513, #A0522D). Top-down orthographic view. Standalone fence piece (not connected to others). Simple rustic wooden fence design. Clean pixel art with black outline."
+    name: "fence_wood_standalone"
+    dimensions: [16, 16]
+    category: "objects"
+    tags: ["fence", "wood", "standalone", "structure"]
+    
+  # FENCES - Wooden Fence End
+  - description: "16x16 pixel wooden fence end piece sprite in Stardew Valley style. Fence piece with connection on one side only, end cap design. Brown wood (#8B4513, #A0522D). Top-down view. End piece for fence lines. Shows post and horizontal rails connecting to one side. Clean pixel art with black outline."
+    name: "fence_wood_end"
+    dimensions: [16, 16]
+    category: "objects"
+    tags: ["fence", "wood", "end", "structure"]
+    
+  # FENCES - Wooden Fence Middle
+  - description: "16x16 pixel wooden fence middle segment sprite in Stardew Valley style. Fence piece connecting on both left and right sides. Brown wood (#8B4513, #A0522D). Top-down view. Middle/connecting piece for fence lines. Shows post with horizontal rails extending both directions. Clean pixel art with black outline."
+    name: "fence_wood_middle"
+    dimensions: [16, 16]
+    category: "objects"
+    tags: ["fence", "wood", "middle", "connecting", "structure"]
+    
+  # FENCES - Wooden Fence Corner
+  - description: "16x16 pixel wooden fence corner piece sprite in Stardew Valley style. Fence piece forming 90-degree corner, connecting on two perpendicular sides. Brown wood (#8B4513, #A0522D). Top-down view. Corner piece for right-angle fence turns. Shows post with horizontal rails in L-shape configuration. Clean pixel art with black outline."
+    name: "fence_wood_corner"
+    dimensions: [16, 16]
+    category: "objects"
+    tags: ["fence", "wood", "corner", "turn", "structure"]

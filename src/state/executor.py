@@ -11,6 +11,9 @@ from datetime import datetime
 from typing import Any, Callable
 from uuid import UUID
 
+from redis import Redis
+from redis.exceptions import RedisError
+
 from src.core.config import get_settings
 from src.core.models import (
     GenerationResult,
@@ -60,9 +63,29 @@ class WorkflowExecutor:
         """
         self.settings = get_settings()
 
-        # Initialize LLM client
+        # Initialize LLM client with Redis caching
         if llm_client is None:
-            self.llm_client = LLMClient(api_key=self.settings.anthropic_api_key)
+            # Initialize Redis client for caching if enabled
+            redis_client = None
+            if self.settings.performance.enable_caching:
+                try:
+                    redis_client = Redis(
+                        host=self.settings.redis.host,
+                        port=self.settings.redis.port,
+                        password=self.settings.redis.password if self.settings.redis.password else None,
+                        db=self.settings.redis.db,
+                        decode_responses=True,
+                        socket_connect_timeout=5,
+                        socket_timeout=5,
+                    )
+                    # Test connection
+                    redis_client.ping()
+                    logger.info(f"Redis cache enabled: {self.settings.redis.host}:{self.settings.redis.port}")
+                except (RedisError, Exception) as e:
+                    logger.warning(f"Redis connection failed, caching disabled: {e}")
+                    redis_client = None
+
+            self.llm_client = LLMClient(settings=self.settings, redis_client=redis_client)
         else:
             self.llm_client = llm_client
 
@@ -374,6 +397,8 @@ class WorkflowExecutor:
         # Create metadata if successful
         metadata = None
         manifest_json = None
+        warnings = []
+        rendering_info: dict[str, Any] = {}
 
         if workflow_state.status == GenerationStatus.COMPLETED and workflow_state.detail_output:
             # Extract colors used
@@ -395,21 +420,174 @@ class WorkflowExecutor:
             if workflow_state.animation_output:
                 frame_count = len(workflow_state.animation_output)
 
+            # Create manifest JSON from detail output
+            detail_output = workflow_state.detail_output
+            
+            # Convert DetailAgent output to Manifest JSON DSL format
+            manifest_json = None
+            if detail_output:
+                try:
+                    from src.rendering.manifest_converter import convert_detail_to_manifest
+                    
+                    asset_name = self._derive_asset_name(
+                        workflow_state.request.description,
+                        workflow_state.request.request_id,
+                    )
+                    
+                    manifest_json = convert_detail_to_manifest(
+                        detail_spec=detail_output,
+                        asset_name=asset_name,
+                        asset_description=workflow_state.request.description,
+                    )
+                    
+                    logger.info(f"Converted DetailAgent output to Manifest JSON: {asset_name}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to convert DetailAgent output to Manifest: {e}")
+                    warnings.append(f"Manifest conversion failed: {str(e)}")
+                    manifest_json = None
+
+            # Automatic rendering if enabled
+            if self.settings.rendering.auto_render and manifest_json:
+                render_start = datetime.utcnow()
+                try:
+                    from pathlib import Path
+                    from src.rendering.manifest_renderer import ManifestRenderer
+                    from src.rendering.pixel import Color
+                    from src.agents.base import RenderingError
+
+                    # Derive asset name from description
+                    asset_name = self._derive_asset_name(
+                        workflow_state.request.description,
+                        workflow_state.request.request_id,
+                    )
+
+                    # Determine output path
+                    output_dir = Path(self.settings.output.output_dir) / str(workflow_state.request.request_id)
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    manifest_path = output_dir / f"{asset_name}.json"
+                    png_path = output_dir / f"{asset_name}.png"
+
+                    # Save manifest JSON first
+                    import json
+                    with open(manifest_path, 'w') as f:
+                        json.dump(manifest_json, f, indent=2)
+                    
+                    logger.info(f"Saved manifest to {manifest_path}")
+
+                    # Parse transparent color
+                    transparent_color = None
+                    if self.settings.rendering.transparent_color:
+                        try:
+                            transparent_color = Color.from_hex(
+                                self.settings.rendering.transparent_color
+                            )
+                        except Exception as e:
+                            logger.warning(f"Invalid transparent color, using None: {e}")
+
+                    # Render manifest to PNG
+                    renderer = ManifestRenderer(
+                        scale=self.settings.rendering.render_scale,
+                        include_metadata=self.settings.rendering.include_metadata,
+                    )
+
+                    rendered_path = await renderer.render_manifest_async(
+                        manifest_json,
+                        png_path,
+                        transparent_color=transparent_color,
+                    )
+
+                    render_time = (datetime.utcnow() - render_start).total_seconds()
+                    logger.info(f"Rendered PNG to {rendered_path} in {render_time:.2f}s")
+
+                    # Update rendering info
+                    rendering_info = {
+                        "png_path": str(rendered_path),
+                        "manifest_path": str(manifest_path),
+                        "auto_rendered": True,
+                        "render_time_seconds": render_time,
+                        "sprite_sheet": frame_count > 1,
+                        "frame_count": frame_count,
+                    }
+
+                    # Export individual frames if requested and is animation
+                    if (self.settings.rendering.export_individual_frames
+                        and frame_count > 1):
+                        try:
+                            from src.rendering.manifest_renderer import render_animation_frames
+                            
+                            frames_dir = output_dir / "frames"
+                            frame_paths = render_animation_frames(
+                                manifest_json,
+                                frames_dir,
+                                name_prefix=asset_name,
+                                scale=self.settings.rendering.render_scale,
+                                transparent_color=transparent_color,
+                            )
+                            rendering_info["individual_frames"] = [str(p) for p in frame_paths]
+                            logger.info(f"Exported {len(frame_paths)} individual frames")
+                        except Exception as e:
+                            logger.warning(f"Failed to export individual frames: {e}")
+                            warnings.append(f"Individual frame export failed: {str(e)}")
+
+                except RenderingError as e:
+                    error_msg = f"Rendering failed: {str(e)}"
+                    logger.error(error_msg)
+                    rendering_info = {
+                        "auto_rendered": False,
+                        "render_error": str(e),
+                    }
+                    
+                    if self.settings.rendering.fail_on_render_error:
+                        # Fail the entire generation
+                        return GenerationResult(
+                            request_id=workflow_state.request.request_id,
+                            status=GenerationStatus.FAILED,
+                            error_message=error_msg,
+                            agent_messages=workflow_state.messages,
+                            warnings=warnings,
+                            completed_at=datetime.utcnow(),
+                            rendering_info=rendering_info,
+                        )
+                    else:
+                        # Continue with warning
+                        warnings.append(error_msg)
+
+                except Exception as e:
+                    error_msg = f"Unexpected rendering error: {str(e)}"
+                    logger.error(error_msg, exc_info=True)
+                    rendering_info = {
+                        "auto_rendered": False,
+                        "render_error": str(e),
+                    }
+                    
+                    if self.settings.rendering.fail_on_render_error:
+                        return GenerationResult(
+                            request_id=workflow_state.request.request_id,
+                            status=GenerationStatus.FAILED,
+                            error_message=error_msg,
+                            agent_messages=workflow_state.messages,
+                            warnings=warnings,
+                            completed_at=datetime.utcnow(),
+                            rendering_info=rendering_info,
+                        )
+                    else:
+                        warnings.append(error_msg)
+
             # Create metadata
+            file_path = rendering_info.get("png_path", "")
             metadata = SpriteMetadata(
                 request_id=workflow_state.request.request_id,
                 asset_type=workflow_state.request.asset_type,
                 style=workflow_state.request.style,
                 dimensions=workflow_state.request.dimensions,
                 palette_used=palette_used,
-                file_path="",  # Will be set by rendering engine
+                file_path=file_path,
                 frame_count=frame_count,
                 tags=workflow_state.request.tags,
                 generation_time_seconds=generation_time,
             )
-
-            # Create manifest JSON from detail output
-            manifest_json = workflow_state.detail_output
 
         # Create result
         return GenerationResult(
@@ -419,9 +597,36 @@ class WorkflowExecutor:
             manifest_json=manifest_json,
             error_message=workflow_state.error_message,
             agent_messages=workflow_state.messages,
-            warnings=[],
+            warnings=warnings,
             completed_at=datetime.utcnow(),
+            rendering_info=rendering_info,
         )
+
+    def _derive_asset_name(self, description: str, request_id: UUID) -> str:
+        """
+        Derive asset filename from description.
+
+        Args:
+            description: User description
+            request_id: Request UUID for fallback
+
+        Returns:
+            str: Safe filename base (without extension)
+        """
+        import re
+        
+        # Take first 3-5 significant words
+        words = description.lower().split()
+        significant_words = [w for w in words if len(w) > 2][:5]
+        
+        if not significant_words:
+            return f"asset_{str(request_id)[:8]}"
+        
+        base_name = "_".join(significant_words)
+        # Remove special chars except _ and -
+        base_name = re.sub(r'[^a-z0-9_-]', '', base_name)
+        
+        return base_name[:50] if base_name else f"asset_{str(request_id)[:8]}"
 
     async def cleanup(self, workflow_id: UUID) -> bool:
         """

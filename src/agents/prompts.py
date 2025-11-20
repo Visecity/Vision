@@ -365,8 +365,8 @@ Implement design specifications at the pixel level with proper shading, highligh
   "pixel_grid": {{
     "width": "pixel width",
     "height": "pixel height",
-    "data": ["row-by-row or flattened pixel data with color indices/hex"],
-    "format": "description of data format (e.g., 'row-major array of hex colors')"
+    "data": [["#hexcolor", "#hexcolor", ...], ["#hexcolor", "#hexcolor", ...]],
+    "format": "MUST be 'row-major array of hex colors' - use actual #RRGGBB hex codes or 'transparent' for empty pixels"
   }},
   "shading_details": {{
     "light_source": "position (e.g., 'top-left')",
@@ -415,12 +415,12 @@ Implement design specifications at the pixel level with proper shading, highligh
     "width": 16,
     "height": 16,
     "data": [
-      "Rows 0-4: sky/transparent background",
-      "Rows 5-10: canopy using base green, shadow green, highlight green",
-      "Rows 11-15: trunk using brown tones with shadow",
-      "All outlined with dark green/brown"
+      ["transparent", "transparent", "transparent", "#2d5016", "#2d5016", "#2d5016", "#2d5016", "#2d5016", "#2d5016", "#2d5016", "#2d5016", "#2d5016", "#2d5016", "transparent", "transparent", "transparent"],
+      ["transparent", "transparent", "#2d5016", "#3a6b1e", "#4d8c2d", "#4d8c2d", "#4d8c2d", "#69b03e", "#69b03e", "#4d8c2d", "#4d8c2d", "#4d8c2d", "#3a6b1e", "#2d5016", "transparent", "transparent"],
+      ["transparent", "#2d5016", "#3a6b1e", "#4d8c2d", "#4d8c2d", "#69b03e", "#69b03e", "#69b03e", "#69b03e", "#69b03e", "#69b03e", "#4d8c2d", "#4d8c2d", "#3a6b1e", "#2d5016", "transparent"],
+      ["#2d5016", "#3a6b1e", "#4d8c2d", "#4d8c2d", "#69b03e", "#69b03e", "#69b03e", "#69b03e", "#69b03e", "#69b03e", "#69b03e", "#69b03e", "#4d8c2d", "#4d8c2d", "#3a6b1e", "#2d5016"]
     ],
-    "format": "conceptual description (actual implementation uses hex arrays)"
+    "format": "row-major array of hex colors"
   }},
   "shading_details": {{
     "light_source": "top-left",
@@ -464,12 +464,12 @@ Implement design specifications at the pixel level with proper shading, highligh
     "width": 16,
     "height": 16,
     "data": [
-      "Diagonal blade from bottom-left to top-right",
-      "Cross guard at center",
-      "Handle below guard",
-      "Metallic highlights on blade edge"
+      ["transparent", "transparent", "transparent", "transparent", "transparent", "transparent", "transparent", "transparent", "transparent", "#2d2d2d", "#2d2d2d", "#c4c4c4", "#2d2d2d", "transparent", "transparent", "transparent"],
+      ["transparent", "transparent", "transparent", "transparent", "transparent", "transparent", "transparent", "#2d2d2d", "#2d2d2d", "#9d9d9d", "#c4c4c4", "#c4c4c4", "#9d9d9d", "#2d2d2d", "transparent", "transparent"],
+      ["transparent", "transparent", "transparent", "transparent", "transparent", "#2d2d2d", "#2d2d2d", "#9d9d9d", "#c4c4c4", "#c4c4c4", "#9d9d9d", "#5e5e5e", "#5e5e5e", "#2d2d2d", "transparent", "transparent"],
+      ["transparent", "transparent", "transparent", "#2d2d2d", "#2d2d2d", "#9d9d9d", "#c4c4c4", "#c4c4c4", "#9d9d9d", "#5e5e5e", "#2d2d2d", "#2d2d2d", "#6b4423", "#2d2d2d", "transparent", "transparent"]
     ],
-    "format": "conceptual description"
+    "format": "row-major array of hex colors"
   }},
   "shading_details": {{
     "light_source": "top-left",
@@ -506,9 +506,51 @@ Implement design specifications at the pixel level with proper shading, highligh
 }}
 ```
 
+## ⚠️ CRITICAL Requirements for pixel_grid.data:
+
+1. **MUST use ONLY these exact color formats:**
+   - Full 6-character hex: `"#RRGGBB"` (e.g., `"#4d8c2d"`, `"#2d2d2d"`, `"#c4c4c4"`)
+   - Transparent pixels: `"transparent"` (lowercase, no quotes in actual use)
+   
+2. **FORBIDDEN color formats - DO NOT USE:**
+   - ❌ `"#T"`, `"#B"`, `"#H"`, `"#M"`, `"#D"`, `"#O"`, `"#S"` (symbolic codes)
+   - ❌ `"#rgba(0,0,0,0.12)"` or any rgba() format
+   - ❌ `"#rgb(255,0,0)"` or any rgb() format
+   - ❌ `"black"`, `"white"`, `"red"` (color names)
+   - ❌ `"#000"` or 3-character hex codes
+   - ❌ Conceptual descriptions like `"Rows 0-4: background"`
+   
+3. **Array structure:**
+   - Format: Row-major 2D array: `[["#hex", "#hex", ...], ["#hex", "#hex", ...]]`
+   - Each inner array is ONE row of pixels
+   - Array length MUST equal height
+   - Each row length MUST equal width
+   
+4. **Palette adherence:**
+   - Use ONLY colors from the provided palette
+   - No inventing new colors or formats
+
+## ✅ CORRECT Examples:
+```json
+"data": [
+  ["#4d8c2d", "#2d5016", "transparent", "#69b03e"],
+  ["#3a6b1e", "#4d8c2d", "#4d8c2d", "#3a6b1e"]
+]
+```
+
+## ❌ WRONG Examples (DO NOT DO THIS):
+```json
+"data": [
+  ["#T", "#B", "#H"],  // WRONG: Symbolic codes
+  ["#rgba(0,0,0,0.5)", "#rgb(255,0,0)"],  // WRONG: rgba/rgb format
+  ["black", "white", "red"],  // WRONG: Color names
+  ["#000", "#FFF"]  // WRONG: 3-character hex
+]
+```
+
 ## Guidelines:
 - Always reference the design specification for shape and composition
-- Use palette colors exclusively - no new colors
+- Use palette colors exclusively - no new colors beyond the palette
 - Consider pixel economy - every pixel serves a purpose
 - Ensure consistent light source throughout
 - Test mental preview: is it readable at target size?

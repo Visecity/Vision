@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "name": "test_sprite",
+    "description": "Test sprite for converter validation",
+    "canvas": {
+      "width": 16,
+      "height": 16
+    }
+  },
+  "layers": [
+    {
+      "name": "Main Layer",
+      "elements": [
+        {
+          "type": "rect",
+          "x": 1,
+          "y": 1,
+          "width": 14,
+          "height": 14,
+          "fill": "#4d8c2d"
+        }
+      ]
+    }
+  ],
+  "palette": {
+    "color1": "#4d8c2d",
+    "color2": "#3a6b1e",
+    "color3": "#69b03e",
+    "color4": "#2d5016",
+    "color5": "#6b4423"
+  }
+}

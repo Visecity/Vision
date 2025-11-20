@@ -7,6 +7,7 @@ the system, ensuring type safety and validation at every step.
 
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
@@ -247,6 +248,15 @@ class GenerationResult(BaseModel):
         default_factory=datetime.utcnow,
         description="Completion timestamp",
     )
+    rendering_info: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Rendering information including: "
+            "'png_path' (str), 'auto_rendered' (bool), "
+            "'render_error' (str), 'sprite_sheet' (bool), "
+            "'frame_count' (int), 'render_time_seconds' (float)"
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_result_consistency(self) -> "GenerationResult":
@@ -292,8 +302,160 @@ class ValidationResult(BaseModel):
     )
 
 
+class AssetResult(BaseModel):
+    """Result from single asset generation in a batch."""
+    
+    name: str = Field(description="Asset name/identifier")
+    success: bool = Field(description="Whether generation succeeded")
+    manifest_path: Path | None = Field(
+        default=None,
+        description="Path to manifest JSON file (if successful)",
+    )
+    png_path: Path | None = Field(
+        default=None,
+        description="Path to rendered PNG file (if successful)",
+    )
+    error: str | None = Field(
+        default=None,
+        description="Error message (if failed)",
+    )
+    generation_time: float = Field(
+        default=0.0,
+        ge=0,
+        description="Time taken to generate in seconds",
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional asset metadata",
+    )
+
+
+class BatchResult(BaseModel):
+    """Results from batch execution."""
+    
+    batch_name: str = Field(description="Name of the batch")
+    total_requests: int = Field(ge=0, description="Total number of asset requests")
+    successful: int = Field(ge=0, description="Number of successful generations")
+    failed: int = Field(ge=0, description="Number of failed generations")
+    assets: list[AssetResult] = Field(
+        default_factory=list,
+        description="List of individual asset results",
+    )
+    atlas_path: Path | None = Field(
+        default=None,
+        description="Path to combined atlas PNG (if created)",
+    )
+    atlas_metadata_path: Path | None = Field(
+        default=None,
+        description="Path to atlas metadata JSON (if created)",
+    )
+    errors: list[str] = Field(
+        default_factory=list,
+        description="List of batch-level errors",
+    )
+    execution_time: float = Field(
+        default=0.0,
+        ge=0,
+        description="Total batch execution time in seconds",
+    )
+    completed_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        description="Batch completion timestamp",
+    )
+    
+    @model_validator(mode="after")
+    def validate_counts(self) -> "BatchResult":
+        """Validate that counts are consistent."""
+        if self.successful + self.failed != self.total_requests:
+            raise ValueError(
+                f"successful ({self.successful}) + failed ({self.failed}) "
+                f"must equal total_requests ({self.total_requests})"
+            )
+        return self
+
+
+class AssetDefinition(BaseModel):
+    """Definition for a single asset in a batch."""
+    
+    description: str = Field(
+        min_length=10,
+        max_length=2000,
+        description="Asset description",
+    )
+    name: str | None = Field(
+        default=None,
+        description="Optional explicit asset name",
+    )
+    dimensions: Dimensions | None = Field(
+        default=None,
+        description="Optional dimensions (uses batch default if not specified)",
+    )
+    style: AssetStyle | None = Field(
+        default=None,
+        description="Optional style (uses batch default if not specified)",
+    )
+    asset_type: AssetType | None = Field(
+        default=None,
+        description="Optional asset type (uses batch default if not specified)",
+    )
+    category: str | None = Field(
+        default=None,
+        description="Optional category for organization",
+    )
+    tags: list[str] = Field(
+        default_factory=list,
+        description="Optional tags",
+    )
+    animation: AnimationConfig | None = Field(
+        default=None,
+        description="Optional animation configuration",
+    )
+
+
+class BatchDefinition(BaseModel):
+    """Complete batch definition for multiple assets."""
+    
+    batch_name: str = Field(description="Name for this batch")
+    output_dir: Path = Field(description="Output directory for assets")
+    create_atlas: bool = Field(
+        default=False,
+        description="Whether to combine assets into atlas",
+    )
+    atlas_name: str | None = Field(
+        default=None,
+        description="Name for atlas (defaults to batch_name)",
+    )
+    
+    # Default settings for all assets
+    default_style: AssetStyle = Field(
+        default=AssetStyle.STARDEW_VALLEY,
+        description="Default style for all assets",
+    )
+    default_dimensions: Dimensions = Field(
+        default=Dimensions(width=16, height=16),
+        description="Default dimensions for all assets",
+    )
+    default_asset_type: AssetType = Field(
+        default=AssetType.SPRITE,
+        description="Default asset type",
+    )
+    
+    # Asset definitions
+    assets: list[AssetDefinition] = Field(
+        min_length=1,
+        description="List of assets to generate",
+    )
+    
+    # Batch execution settings
+    parallel_count: int = Field(
+        default=1,
+        ge=1,
+        le=10,
+        description="Number of parallel generations",
+    )
+
+
 # TODO: Phase 3 - Add models for LangGraph state management
 # TODO: Phase 3 - Add models for agent-specific outputs (design specs, palette selections)
 # TODO: Phase 3 - Add models for animation frame data
-# TODO: Phase 4 - Add models for batch processing
 # TODO: Phase 4 - Add models for version control and asset history

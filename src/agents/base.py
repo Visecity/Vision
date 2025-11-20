@@ -317,6 +317,42 @@ class ValidationError(Exception):
         super().__init__(error_msg)
 
 
+class RenderingError(Exception):
+    """
+    Exception raised when PNG rendering fails.
+
+    This error is raised during the automatic rendering phase when
+    a manifest cannot be converted to PNG format. It includes context
+    about what failed and why.
+
+    Attributes:
+        message: Error description
+        manifest_path: Optional path to the manifest that failed
+        context: Optional additional error context
+    """
+
+    def __init__(
+        self,
+        message: str,
+        manifest_path: str | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> None:
+        """
+        Initialize rendering error.
+
+        Args:
+            message: Error description
+            manifest_path: Optional manifest file path
+            context: Optional error context
+        """
+        self.manifest_path = manifest_path
+        self.context = context or {}
+        error_msg = f"Rendering failed: {message}"
+        if manifest_path:
+            error_msg += f" (manifest: {manifest_path})"
+        super().__init__(error_msg)
+
+
 # TODO: Phase 3 - Implement specialized agent classes (Design, Palette, Detail, Animation)
 # TODO: Phase 3 - Add middleware/plugin system for agent extensions
 # TODO: Phase 3 - Add agent state persistence and recovery

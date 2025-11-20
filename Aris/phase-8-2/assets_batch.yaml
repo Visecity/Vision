@@ -1,0 +1,36 @@
+# Phase 8.2: Player Character Assets
+# Stardew Valley inspired player character sprites and animations
+# 
+# This batch generates the core player character sprite with 4-directional
+# movement animation (Down, Up, Left, Right) and shadow sprite.
+
+batch_name: "phase_8_2_player_character"
+output_dir: "./Aris/phase-8-2"
+create_atlas: true
+parallel_count: 2
+style: "stardew_valley"
+
+# Atlas configuration for combining sprites
+atlas_config:
+  algorithm: "MAXRECTS"
+  padding: 2
+  max_size: [1024, 1024]
+  power_of_two: true
+
+# Asset definitions
+assets:
+  # Player Character - Animated Sprite Sheet (32x128, 2 columns × 4 rows)
+  - description: "16x32 pixel player character sprite sheet with 4-directional walk animation in Stardew Valley style. Atlas layout: 2 columns × 4 rows (32x128 total). Each frame is 16x32 pixels. Row 0 (Down/Front): player facing camera, feet at bottom, 2-frame walk cycle. Row 1 (Up/Back): player facing away, back of head visible, 2-frame walk cycle. Row 2 (Left): player facing left in profile, 2-frame walk cycle. Row 3 (Right): player facing right in profile, 2-frame walk cycle. Colors: beige/tan skin (#F5DEB3), brown hair (#654321), blue shirt (#4169E1), brown pants (#8B4513), dark brown shoes (#3D2817), black outline. Orthographic top-down perspective with slight front angle. Position represents feet. Sprite extends upward from ground position. Consistent colors across all directions. Clean pixel art style, no anti-aliasing."
+    name: "player_animated_32"
+    dimensions: [32, 128]
+    category: "character"
+    animated: true
+    tags: ["player", "character", "animated", "4-direction"]
+    
+  # Player Shadow - Simple Oval
+  - description: "16x8 pixel oval shadow sprite for player character in Stardew Valley style. Semi-transparent black oval (50% opacity, #000000) centered horizontally. Used beneath player feet at player position. Simple elliptical shape, smooth edges in pixel art style. PNG with alpha transparency."
+    name: "shadow"
+    dimensions: [16, 8]
+    category: "character"
+    animated: false
+    tags: ["shadow", "player", "utility"]

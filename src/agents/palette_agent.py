@@ -50,7 +50,7 @@ class PaletteAgent(BaseAgent[AgentContext, ColorPalette]):
         model_name: Claude model to use for palette selection
 
     Example:
-        >>> agent = PaletteAgent(llm_client=client, model_name="claude-3-5-sonnet-20241022")
+        >>> agent = PaletteAgent(llm_client=client, model_name="claude-sonnet-4-5-20250929")
         >>> context = AgentContext(
         ...     request=sprite_request,
         ...     current_step="palette",
@@ -63,7 +63,7 @@ class PaletteAgent(BaseAgent[AgentContext, ColorPalette]):
     def __init__(
         self,
         llm_client: LLMClient,
-        model_name: str = "claude-3-5-sonnet-20241022",
+        model_name: str = "claude-sonnet-4-5",
         max_colors: int = 52,
     ) -> None:
         """

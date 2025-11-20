@@ -1,10 +1,10 @@
 # Vision Multi-Agent System Implementation Roadmap
 
-**Project**: Vision - AI-Powered Pixel Art Generation System  
-**Architecture**: Multi-Agent Specialist System (Option 2)  
-**Timeline**: 8-10 Weeks MVP Development  
-**LLM Provider**: Claude Sonnet 4.5 (All Agents)  
-**Last Updated**: 2025-11-17
+**Project**: Vision - AI-Powered Pixel Art Generation System
+**Architecture**: Multi-Agent Specialist System (Option 2)
+**Timeline**: 8-10 Weeks MVP Development
+**LLM Provider**: Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) (All Agents)
+**Last Updated**: 2025-11-18
 
 ---
 
@@ -2537,7 +2537,7 @@ MAX_REVISIONS=2
 **Configuration File** (config/settings.yaml):
 ```yaml
 agent_config:
-  model: "claude-sonnet-4-5-20241022"
+  model: "claude-sonnet-4-5-20250929"
   max_tokens: 4096
   temperature: 0.7
   
@@ -2606,7 +2606,7 @@ python scripts/init_project.py
 - Batch of 10 assets: ~150-250K tokens
 - Monthly (100 assets): ~1.5-2.5M tokens
 
-**Cost Estimation** (Claude Sonnet 4.5):
+**Cost Estimation** (Claude Sonnet 4.5 - claude-sonnet-4-5-20250929):
 - Input: $3 per million tokens
 - Output: $15 per million tokens
 - Average per asset: $0.15 - $0.30

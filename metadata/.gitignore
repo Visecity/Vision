@@ -1,0 +1,5 @@
+# Ignore metadata JSON files but keep the directory structure
+*.json
+
+# Keep README
+!README.md

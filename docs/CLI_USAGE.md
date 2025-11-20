@@ -255,12 +255,113 @@ Vision uses the following environment variables:
 ### Required
 - `ANTHROPIC_API_KEY`: Your Anthropic API key
 
-### Optional
+### Optional - Redis & Caching
 - `REDIS_HOST`: Redis server host (default: localhost)
 - `REDIS_PORT`: Redis server port (default: 6379)
 - `REDIS_PASSWORD`: Redis password (if required)
 - `REDIS_DB`: Redis database number (default: 0)
+- `ENABLE_CACHING`: Enable response caching (default: true)
+- `CACHE_TTL`: Cache time-to-live in seconds (default: 3600, recommended: 604800 for 7 days)
+
+### Optional - Other
 - `VISION_SESSION_ID`: Default session ID
+- `MAX_RETRIES`: Maximum API retry attempts (default: 3)
+- `TIMEOUT`: API call timeout in seconds (default: 300)
+
+### Response Caching
+
+Vision automatically caches LLM responses in Redis to improve performance and reduce costs:
+
+- **How it works**: Identical requests return cached responses instantly
+- **Performance**: 40% faster on cache hits
+- **Cost savings**: 30-40% reduction on cached responses
+- **Cache keys**: Generated from request parameters (model, messages, temperature, etc.)
+- **TTL**: Configurable via `CACHE_TTL` (default: 1 hour, recommended: 7 days)
+- **Monitoring**: Check cache stats with `docker exec vision-redis-1 redis-cli INFO stats`
+- **Clear cache**: `docker exec vision-redis-1 redis-cli FLUSHDB` (if needed)
+
+**When caching helps most**:
+- Iterating on prompts or designs
+- Generating similar sprites with slight variations
+- Re-running failed workflows
+- Testing and development
+
+### Automatic Metadata Collection
+
+Vision automatically collects comprehensive metadata for all sprite generation to enable intelligent optimization:
+
+**What's Collected**:
+- **Complexity Metrics**: Entropy, repetition, structure analysis
+- **Encoding Decisions**: Selected strategy and reasoning
+- **Performance Data**: Analysis time, compression ratios
+- **Prediction Accuracy**: Estimated vs actual compression
+
+**How It Works**:
+- **Automatic**: Metadata collected transparently during generation
+- **Non-Blocking**: Collection failures don't affect generation
+- **Storage**: JSON files in `metadata/` directory
+- **Analytics**: Use [`scripts/validate_phase3.py`](../scripts/validate_phase3.py) to analyze
+
+**Benefits**:
+- **Monitoring**: Track encoding performance over time
+- **Optimization**: Data-driven threshold tuning
+- **Debugging**: Full visibility into encoding decisions
+- **Reporting**: Generate performance reports
+
+See [`docs/ADAPTIVE_THRESHOLDS_GUIDE.md`](ADAPTIVE_THRESHOLDS_GUIDE.md) for details.
+
+### Parallel Execution
+
+Vision automatically uses parallel execution for animation generation to dramatically improve performance:
+
+**How It Works**:
+- **Automatic**: Animations with ≥ 4 frames use parallel mode automatically
+- **Threshold**: < 4 frames use sequential mode (less overhead)
+- **Concurrent Frames**: Up to 8 frames generated simultaneously
+- **Implementation**: Uses LangGraph's parallel node execution
+
+**Performance Characteristics**:
+
+| Animation Frames | Mode | Expected Speedup | Overall Improvement |
+|------------------|------|------------------|---------------------|
+| 1-3 frames | Sequential | N/A | N/A (optimized for overhead) |
+| 4 frames | Parallel | 2.5-3x | ~25-30% faster |
+| 8 frames | Parallel | 4-5x | ~50-55% faster |
+
+**Monitoring Parallel Execution**:
+
+The workflow logs provide detailed timing metrics:
+
+```bash
+# Example log output for 4-frame parallel animation
+INFO - Routing to parallel animation generation (4 frames)
+INFO - Frame 0 completed in 10.5s
+INFO - Frame 1 completed in 10.2s
+INFO - Frame 2 completed in 10.8s
+INFO - Frame 3 completed in 10.1s
+INFO - Parallel execution: 4 frames in 10.8s (sequential would be ~41.6s, speedup: 3.85x)
+```
+
+**CLI Examples**:
+
+```bash
+# Sequential mode (2 frames) - automatic
+vision generate "walking character" --frames 2 --dimensions 16x32
+
+# Parallel mode (4 frames) - automatic
+vision generate "walking character" --frames 4 --dimensions 16x32
+
+# Max parallel (8 frames) - automatic
+vision generate "walking character" --frames 8 --dimensions 16x32
+```
+
+**Configuration**:
+
+Parallel execution is enabled by default and requires no configuration. It activates automatically based on frame count.
+
+**Technical Details**:
+
+See [`PARALLEL_EXECUTION_TEST_RESULTS.md`](../PARALLEL_EXECUTION_TEST_RESULTS.md) for comprehensive performance analysis and test results.
 
 ### Configuration Files
 

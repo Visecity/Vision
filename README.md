@@ -8,16 +8,40 @@
 
 ## ✨ Features
 
-- 🤖 **Multi-Agent Architecture**: Specialized AI agents collaborate on design, palette, detail, and animation
-- 🎨 **Stardew Valley Style**: Pre-configured for 16x16 tiles, limited palettes, and orthographic perspective
-- 🔄 **Animation Support**: Generates complete walk cycles and sprite animations
-- 📦 **Sprite Sheet Export**: Outputs PNG sprite sheets with JSON metadata
-- 🎯 **Quality Assurance**: Built-in checkpoints ensure consistent, high-quality output
-- 💰 **Cost Optimization**: Response caching reduces API costs by 30-40%
+### 🎯 Complete Workflow Automation
+- **Idea → PNG**: Single command from description to rendered asset
+- **Batch Generation**: Create multiple related assets from YAML/JSON definitions
+- **Atlas Textures**: Automatic sprite sheet/texture atlas creation
+- **Consistent Naming**: Matching .json and .png filenames
+
+### 🚀 Enhanced CLI
+- [`vision generate`](docs/CLI_REFERENCE.md#vision-generate) - Enhanced with auto-rendering and organization
+- [`vision generate-batch`](docs/CLI_REFERENCE.md#vision-generate-batch) - Batch generation from definition files
+- [`vision create-atlas`](docs/CLI_REFERENCE.md#vision-create-atlas) - Combine assets into texture atlases
+- [`vision render`](docs/CLI_REFERENCE.md#vision-render) - Manual rendering with custom settings
+
+### 🎯 Intelligent Compression (Phases 1-3)
+- **Phase 1: Palette Indexing** - 60-75% compression for low-color sprites (≤16 colors)
+- **Phase 2: Delta Encoding** - 70-90% compression for animation frames
+- **Phase 3: Adaptive Thresholds** - Intelligent encoding selection with >90% optimal rate
+- **Automatic Operation** - System learns and optimizes transparently
+- **Full Monitoring** - Complete visibility into encoding decisions and performance
+
+### 🤖 Multi-Agent Architecture
+- **Specialized AI Agents**: Collaborate on design, palette, detail, and animation
+- **Stardew Valley Style**: Pre-configured for 16x16 tiles, limited palettes, orthographic perspective
+- **Animation Support**: Complete walk cycles and sprite animations
+- **Quality Assurance**: Built-in checkpoints ensure consistent output
+
+### ⚡ Performance & Reliability
+- **Parallel Execution**: Automatic parallel frame generation (20-30% faster, 2-4x for 4+ frames)
+- **Response Caching**: Redis-powered caching (40% faster responses, 30-40% cost reduction on hits)
+- **Batch Processing**: 2-10 concurrent asset generations
+- **State Persistence**: Reliable workflow state management with Redis
 
 ## 🏗️ Architecture
 
-Vision uses a sophisticated multi-agent system powered by LangGraph and Claude 3.5 Sonnet:
+Vision uses a sophisticated multi-agent system powered by LangGraph and Claude Sonnet 4.5:
 
 - **Orchestrator Agent**: Manages workflow and coordinates other agents
 - **Design Agent**: Creates structural blueprints and composition
@@ -65,18 +89,24 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-### Usage
+### Generate Your First Asset
 
 ```bash
-# Generate a single sprite
-vision generate "oak tree tile" --style stardew
+# Simple generation with auto-rendering
+vision generate "wooden chest" --dimensions 16x16
 
-# Generate with animation
-vision generate "farmer character" --animate --frames 16
+# With custom name and category
+vision generate "health potion" --name health_pot --category items
 
-# Batch generation
-vision batch generate sprites.yaml --output ./output
+# Batch generation from YAML file
+vision generate-batch examples/batch_examples/items_batch.yaml
 ```
+
+### More Examples
+
+See [`docs/WORKFLOW_GUIDE.md`](docs/WORKFLOW_GUIDE.md) for comprehensive workflow examples.
+See [`docs/BATCH_GENERATION_GUIDE.md`](docs/BATCH_GENERATION_GUIDE.md) for batch operation details.
+See [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md) for complete command reference.
 
 ## 📊 Project Status
 
@@ -131,10 +161,24 @@ mypy src
 
 ## 📖 Documentation
 
+### User Guides
+- [Workflow Guide](docs/WORKFLOW_GUIDE.md) - Complete workflow examples and best practices
+- [CLI Reference](docs/CLI_REFERENCE.md) - Comprehensive command documentation
+- [Batch Generation Guide](docs/BATCH_GENERATION_GUIDE.md) - Batch operations and atlas creation
+- [Migration Guide](docs/MIGRATION_GUIDE.md) - Upgrading from v1.x
+- [Quick Start](QUICKSTART.md) - Get started in 5 minutes
+
+### Technical Documentation
 - [Implementation Roadmap](IMPLEMENTATION_ROADMAP.md) - Complete technical blueprint
-- [API Reference](docs/api-reference.md) - API documentation
-- [Agent System](docs/agents.md) - Agent architecture and specifications
+- [Workflow Improvements Design](WORKFLOW_IMPROVEMENTS_DESIGN.md) - v2.0 technical specification
 - [Contributing Guide](docs/CONTRIBUTING.md) - How to contribute
+- [Rendering Guide](docs/RENDERING_GUIDE.md) - Rendering system documentation
+
+### Compression Documentation
+- [Palette Indexing Guide](PALETTE_INDEXING_GUIDE.md) - Phase 1 compression (60-75% reduction)
+- [Delta Encoding Guide](DELTA_ENCODING_GUIDE.md) - Phase 2 animation compression (70-90% reduction)
+- [Adaptive Thresholds Guide](docs/ADAPTIVE_THRESHOLDS_GUIDE.md) - Phase 3 intelligent optimization
+- [Compression Architecture](COMPRESSION_ENHANCEMENTS_ARCHITECTURE.md) - Complete technical architecture
 
 ## 🎯 Roadmap
 
